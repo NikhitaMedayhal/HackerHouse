@@ -392,7 +392,7 @@ You can go get one too 👾❤️ YOU BETTER GET ONE 👹 (I heard humans use th
               boxShadow: "4px 4px 0 black",
             }}
           >
-            Generate ID (IN HUMAN LANGUAGE SPRISINGLY INCOMPETENT FOR SOMEONE WHO HAS VERY HIGH STANDARDS)
+            Generate ID (IN HUMAN LANGUAGE, 'CAUSE THEY'RE SUPRISINGLY INCOMPETENT FOR THEY HAVE VERY HIGH STANDARDS)
           </button>
         </div>
 
