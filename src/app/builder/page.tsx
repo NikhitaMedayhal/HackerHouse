@@ -6,9 +6,6 @@ import html2canvas from "html2canvas";
 const PIXEL_FONT =
   "'Press Start 2P', 'Courier New', Courier, monospace";
 
-const CLOUDINARY_CLOUD_NAME = "i8fusryf";
-const CLOUDINARY_UPLOAD_PRESET = "hh_goa_passport";
-
 const inputStyle = {
   width: "100%",
   padding: "10px",
@@ -27,6 +24,7 @@ export default function BuilderPage() {
   const passportRef = useRef<HTMLDivElement | null>(null);
   const [photo, setPhoto] = useState<string | null>(null);
   const [showPassport, setShowPassport] = useState(false);
+  const [isPosting, setIsPosting] = useState(false);
 
   const [form, setForm] = useState({
     name: "",
@@ -98,6 +96,7 @@ I'm joining the builders heading to Goa!
   };
 
   const shareToX = async () => {
+    setIsPosting(true);
     try {
       const blob = await capturePassportBlob();
       if (!blob) {
@@ -105,53 +104,41 @@ I'm joining the builders heading to Goa!
         return;
       }
 
-      // X's web intent link has no parameter for attaching a file — it
-      // only accepts text/url query params. So the reliable way to get
-      // the actual ID showing up in the post is: upload the image
-      // somewhere public, then hand X that URL. X fetches it and renders
-      // a photo card, so the preview shows the real passport graphic.
-      const formData = new FormData();
-      formData.append("file", blob, "builder-passport.png");
-      formData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
+      // Upload the passport so it has a stable id, then link to OUR share
+      // page (not the raw image). The share page has proper Open Graph
+      // tags so X renders an actual preview card, and it has a real "back
+      // to the site" button — unlike linking straight to a .png, which
+      // just dead-ends on the image with nowhere to go.
+      const body = new FormData();
+      body.append("image", blob, "builder-passport.png");
 
-      const response = await fetch(
-        `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
-        { method: "POST", body: formData }
-      );
+      const res = await fetch("/api/passport", { method: "POST", body });
+      const resJson = await res.json();
 
-      const responseText = await response.text();
-
-      if (!response.ok) {
-        // Surface Cloudinary's actual error (bad cloud name, unknown/signed
-        // preset, etc.) instead of swallowing it into a generic message.
-        let detail = responseText;
-        try {
-          const parsed = JSON.parse(responseText);
-          detail = parsed?.error?.message || responseText;
-        } catch {
-          // responseText wasn't JSON — use it as-is
-        }
-        throw new Error(`Cloudinary upload failed (${response.status}): ${detail}`);
+      if (!res.ok) {
+        throw new Error(resJson?.error || `Upload failed (${res.status})`);
       }
 
-      const data = JSON.parse(responseText);
-      const imageUrl = data.secure_url as string;
+      const shareUrl = `${window.location.origin}/share/${resJson.id}`;
 
       const xUrl =
         `https://x.com/intent/post?text=` +
-        encodeURIComponent(`${TWEET_MESSAGE}\n\n${imageUrl}`);
+        encodeURIComponent(`${TWEET_MESSAGE}\n\n${shareUrl}`);
 
       window.open(xUrl, "_blank", "noopener,noreferrer");
     } catch (error) {
       console.error(error);
       const message = error instanceof Error ? error.message : "Unknown error";
       alert(`Something went wrong while preparing your passport:\n\n${message}`);
+    } finally {
+      setIsPosting(false);
     }
   };
 
   const handleSubmit = () => {
     setShowPassport(true);
   };
+
 
   return (
     <main
@@ -531,6 +518,7 @@ I'm joining the builders heading to Goa!
 
               <button
                 onClick={shareToX}
+                disabled={isPosting}
                 style={{
                   flex: 1,
                   minWidth: "150px",
@@ -541,10 +529,11 @@ I'm joining the builders heading to Goa!
                   boxShadow: "4px 4px 0 #0B6B3A",
                   fontFamily: PIXEL_FONT,
                   fontSize: "9px",
-                  cursor: "pointer",
+                  cursor: isPosting ? "default" : "pointer",
+                  opacity: isPosting ? 0.6 : 1,
                 }}
               >
-                𝕏 POST ON X
+                {isPosting ? "PREPARING…" : "𝕏 POST ON X"}
               </button>
             </div>
           </>
