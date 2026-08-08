@@ -28,7 +28,7 @@ export default function BuilderPage() {
 
   const [form, setForm] = useState({
     name: "",
-    country: "",
+    city: "",
     role: "",
     project: "",
     github: "",
@@ -197,8 +197,8 @@ You can go get one too 👾❤️ YOU BETTER GET ONE 👹 (I heard humans use th
 
           <input
             type="text"
-            name="country"
-            value={form.country}
+            name="city"
+            value={form.city}
             onChange={handleChange}
             style={inputStyle}
           />
@@ -499,9 +499,9 @@ You can go get one too 👾❤️ YOU BETTER GET ONE 👹 (I heard humans use th
 
                     <br />
 
-                    <strong>COUNTRY</strong>
+                    <strong>CITY</strong>
                     <br />
-                    {form.country || "—"}
+                    {form.city || "—"}
 
                     <br />
 
