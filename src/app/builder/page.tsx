@@ -6,6 +6,9 @@ import html2canvas from "html2canvas";
 const PIXEL_FONT =
   "'Press Start 2P', 'Courier New', Courier, monospace";
 
+const CLOUDINARY_CLOUD_NAME = "i8fusryf";
+const CLOUDINARY_UPLOAD_PRESET = "hh_goa_passport";
+
 const inputStyle = {
   width: "100%",
   padding: "10px",
@@ -60,25 +63,16 @@ export default function BuilderPage() {
     });
   };
 
-  // Moved out of handleDownload so it can be used by the "POST ON X" button
-  const postToX = () => {
-    const message = `I just got my Hacker House Goa 2026 Builder Passport! 🌴💻
+  const TWEET_MESSAGE = `I just got my Hacker House Goa 2026 Builder Passport! 🌴💻
 
 I'm joining the builders heading to Goa!
 
-#HackerHouseGoa #HHGoa #BuildInPublic`;
+#HackerHouseGoa #HHGoa #FrameInGoa #BuildInPublic`;
 
-    const xUrl = `https://x.com/intent/post?text=${encodeURIComponent(
-      message
-    )}`;
-
-    window.open(xUrl, "_blank", "noopener,noreferrer");
-  };
-
-  // Renamed handler used by the "DOWNLOAD ID" button (was calling an
-  // undefined `downloadPassport` before)
-  const handleDownload = async () => {
-    if (!passportRef.current) return;
+  // Shared capture logic used by both the download and share buttons, so
+  // they can't drift out of sync.
+  const capturePassportBlob = async (): Promise<Blob | null> => {
+    if (!passportRef.current) return null;
 
     const canvas = await html2canvas(passportRef.current, {
       scale: 3,
@@ -86,10 +80,73 @@ I'm joining the builders heading to Goa!
       useCORS: true,
     });
 
+    return new Promise<Blob | null>((resolve) =>
+      canvas.toBlob(resolve, "image/png")
+    );
+  };
+
+  const handleDownload = async () => {
+    const blob = await capturePassportBlob();
+    if (!blob) return;
+
+    const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.download = `${form.name || "builder"}-passport.png`;
-    link.href = canvas.toDataURL("image/png");
+    link.href = url;
     link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const shareToX = async () => {
+    try {
+      const blob = await capturePassportBlob();
+      if (!blob) {
+        alert("Could not generate your passport image.");
+        return;
+      }
+
+      // X's web intent link has no parameter for attaching a file — it
+      // only accepts text/url query params. So the reliable way to get
+      // the actual ID showing up in the post is: upload the image
+      // somewhere public, then hand X that URL. X fetches it and renders
+      // a photo card, so the preview shows the real passport graphic.
+      const formData = new FormData();
+      formData.append("file", blob, "builder-passport.png");
+      formData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
+
+      const response = await fetch(
+        `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
+        { method: "POST", body: formData }
+      );
+
+      const responseText = await response.text();
+
+      if (!response.ok) {
+        // Surface Cloudinary's actual error (bad cloud name, unknown/signed
+        // preset, etc.) instead of swallowing it into a generic message.
+        let detail = responseText;
+        try {
+          const parsed = JSON.parse(responseText);
+          detail = parsed?.error?.message || responseText;
+        } catch {
+          // responseText wasn't JSON — use it as-is
+        }
+        throw new Error(`Cloudinary upload failed (${response.status}): ${detail}`);
+      }
+
+      const data = JSON.parse(responseText);
+      const imageUrl = data.secure_url as string;
+
+      const xUrl =
+        `https://x.com/intent/post?text=` +
+        encodeURIComponent(`${TWEET_MESSAGE}\n\n${imageUrl}`);
+
+      window.open(xUrl, "_blank", "noopener,noreferrer");
+    } catch (error) {
+      console.error(error);
+      const message = error instanceof Error ? error.message : "Unknown error";
+      alert(`Something went wrong while preparing your passport:\n\n${message}`);
+    }
   };
 
   const handleSubmit = () => {
@@ -473,7 +530,7 @@ I'm joining the builders heading to Goa!
               {/* POST ON X */}
 
               <button
-                onClick={postToX}
+                onClick={shareToX}
                 style={{
                   flex: 1,
                   minWidth: "150px",
