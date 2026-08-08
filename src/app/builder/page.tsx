@@ -32,6 +32,7 @@ export default function BuilderPage() {
     role: "",
     project: "",
     github: "",
+    humour : false,
   });
 
   const handlePhotoUpload = (
@@ -61,14 +62,15 @@ export default function BuilderPage() {
     });
   };
 
-  const TWEET_MESSAGE = `I just got my Hacker House Goa 2026 Builder Passport! 🌴💻
+  const TWEET_MESSAGE = `I just got my character card uh no no sorry AHEM, my ID for Hacker House Goa 2026!
 
-I'm joining the builders heading to Goa!
+You can go get one too 👾❤️ YOU BETTER GET ONE 👹 (I heard humans use threatening so 💖 :0)
 
-#HackerHouseGoa #HHGoa #FrameInGoa #BuildInPublic`;
+#HackerHouseGoa #FrameInGoa #ILoveHumans
 
-  // Shared capture logic used by both the download and share buttons, so
-  // they can't drift out of sync.
+~🧍🏽‍♀️(maybe)`
+;
+
   const capturePassportBlob = async (): Promise<Blob | null> => {
     if (!passportRef.current) return null;
 
@@ -104,11 +106,6 @@ I'm joining the builders heading to Goa!
         return;
       }
 
-      // Upload the passport so it has a stable id, then link to OUR share
-      // page (not the raw image). The share page has proper Open Graph
-      // tags so X renders an actual preview card, and it has a real "back
-      // to the site" button — unlike linking straight to a .png, which
-      // just dead-ends on the image with nowhere to go.
       const body = new FormData();
       body.append("image", blob, "builder-passport.png");
 
@@ -179,11 +176,11 @@ I'm joining the builders heading to Goa!
               lineHeight: 1.6,
             }}
           >
-            Builder Information
+            Enter your information for your own character card, or what them humans call ID
           </h1>
 
           <label style={{ fontSize: "11px", lineHeight: 1.8 }}>
-            Name
+            What do humans call you?
           </label>
 
           <input
@@ -195,7 +192,7 @@ I'm joining the builders heading to Goa!
           />
 
           <label style={{ fontSize: "11px", lineHeight: 1.8 }}>
-            Country
+            Where are you from?
           </label>
 
           <input
@@ -207,7 +204,7 @@ I'm joining the builders heading to Goa!
           />
 
           <label style={{ fontSize: "11px", lineHeight: 1.8 }}>
-            Role
+            What are you suspiciously good at?
           </label>
 
           <select
@@ -225,7 +222,7 @@ I'm joining the builders heading to Goa!
           </select>
 
           <label style={{ fontSize: "11px", lineHeight: 1.8 }}>
-            Project Name
+            Name the crew you're bringing to Goa.
           </label>
 
           <input
@@ -237,7 +234,7 @@ I'm joining the builders heading to Goa!
           />
 
           <label style={{ fontSize: "11px", lineHeight: 1.8 }}>
-            GitHub
+            GitHub(Humans asking 🧍🏽‍♀️, I gotta give them something)
           </label>
 
           <input
@@ -247,6 +244,73 @@ I'm joining the builders heading to Goa!
             onChange={handleChange}
             style={inputStyle}
           />
+
+          {/* ================= SENSE OF HUMOUR ================= */}
+
+<div
+  style={{
+    marginTop: "5px",
+    marginBottom: "20px",
+    padding: "14px",
+    background: "#0B6B3A",
+    border: "3px solid black",
+    boxShadow: "4px 4px 0 black",
+  }}
+>
+  <label
+    style={{
+      display: "block",
+      color: "#f7c948",
+      fontSize: "9px",
+      lineHeight: 1.8,
+      marginBottom: "8px",
+    }}
+  >
+    SENSE OF HUMOUR
+  </label>
+
+  <label
+    style={{
+      display: "flex",
+      alignItems: "flex-start",
+      gap: "8px",
+      cursor: "pointer",
+      color: "#ffe58a",
+      fontSize: "10px",
+      lineHeight: 1.8,
+    }}
+  >
+    <input
+      type="checkbox"
+      checked={form.humour}
+      onChange={(e) =>
+        setForm({
+          ...form,
+          humour: e.target.checked,
+        })
+      }
+      style={{
+        width: "16px",
+        height: "16px",
+        accentColor: "#ff4f9a",
+        flexShrink: 0,
+      }}
+    />
+
+    <span>
+      I LOVE HUMANS 😃
+      <br />
+      <span
+        style={{
+          color: "#ff4f9a",
+          fontSize: "10px",
+        }}
+      >
+        Select this if you read all the captions and showed your teeth 🦷.
+      </span>
+    </span>
+  </label>
+</div>
 
           {/* PHOTO UPLOAD */}
 
@@ -261,7 +325,7 @@ I'm joining the builders heading to Goa!
                 lineHeight: 1.8,
               }}
             >
-              Upload your photo
+              Submit visual evidence of your existence.
             </label>
 
             <input
@@ -328,7 +392,7 @@ I'm joining the builders heading to Goa!
               boxShadow: "4px 4px 0 black",
             }}
           >
-            Generate Passport
+            Generate ID (IN HUMAN LANGUAGE SPRISINGLY INCOMPETENT FOR SOMEONE WHO HAS VERY HIGH STANDARDS)
           </button>
         </div>
 
@@ -345,6 +409,7 @@ I'm joining the builders heading to Goa!
                 background: "#ffe58a",
                 boxSizing: "border-box",
                 marginTop: "20px",
+                color: "#ff4f9a"
               }}
             >
               <div
@@ -352,6 +417,7 @@ I'm joining the builders heading to Goa!
                   background: "#f7c948",
                   border: "3px solid black",
                   padding: "15px",
+                  color: "#ff4f9a"
                 }}
               >
                 {/* HEADER */}
@@ -480,10 +546,59 @@ I'm joining the builders heading to Goa!
                   letterSpacing: "2px",
                 }}
               >
-                BUILDER PASSPORT • GOA 2026
+                BUILDER CARD • GOA 2026
               </div>
             </div>
 
+                        {/* ================= CONGRATULATIONS ================= */}
+
+        <div
+          style={{
+            marginTop: "25px",
+            marginBottom: "20px",
+            padding: "16px",
+            background: "#128C52",
+            border: "3px solid black",
+            boxShadow: "5px 5px 0 black",
+            textAlign: "center",
+            color: "#ffe58a",
+          }}
+        >
+          <div
+            style={{
+              fontSize: "11px",
+              lineHeight: 1.8,
+              color: "#ff4f9a",
+              marginBottom: "10px",
+            }}
+          >
+            CONGRATS. YOU DID IT.
+          </div>
+
+          <div
+            style={{
+              fontSize: "8px",
+              lineHeight: 2,
+              marginBottom: "12px",
+            }}
+          >
+            I SUPPOSE YOU'RE
+            <br />
+            OFFICIALLY A PERSON NOW.
+          </div>
+
+          <div
+            style={{
+              fontSize: "9px",
+              lineHeight: 1.8,
+              color: "#f7c948",
+            }}
+          >
+            NOW GO SHOW 'EM
+            <br />
+            WHO OWNS THIS PLACE.
+          </div>
+        </div>
             {/* ================= BUTTONS ================= */}
 
             <div

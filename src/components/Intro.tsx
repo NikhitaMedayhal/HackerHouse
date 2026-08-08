@@ -17,7 +17,7 @@ const GROUND_HEIGHT = 80;
 const STAR_COUNT = 80;
 
 const POPUP_MESSAGE =
-  "Tired of this dark place? I know somewhere bright and sunny. But won't you need a passport for that? Grab your laptops, we're going to Goa!";
+  "WHA-, where am I? Why is it so dark here? What is this strange golden thing in front of me? Oh oh wait I see, it's a character card! But its empty....Maybe I'm supposed to fill it?";
 
 // how close (in px, sprite-center to passport-center) counts as "reached it"
 const PASSPORT_TRIGGER_DISTANCE = 50;

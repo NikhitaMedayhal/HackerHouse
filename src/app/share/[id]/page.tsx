@@ -92,22 +92,13 @@ export default async function SharePage({ params }: Props) {
         <div
           style={{
             marginTop: "30px",
-            background: "#ffe58a",
+            background: "#0B6B3A",
             border: "4px solid #0B6B3A",
             padding: "15px",
             boxShadow: "6px 6px 0 black",
           }}
         >
-          <p
-            style={{
-              fontSize: "10px",
-              lineHeight: 1.8,
-              marginTop: 0,
-            }}
-          >
-            BUILDER PASSPORT
-          </p>
-
+          
           {/* TEMPORARY IMAGE */}
           <img
             src={`/api/passport/${id}`}
@@ -121,15 +112,6 @@ export default async function SharePage({ params }: Props) {
             }}
           />
 
-          <p
-            style={{
-              fontSize: "8px",
-              lineHeight: 1.8,
-              marginBottom: 0,
-            }}
-          >
-            HACKER HOUSE GOA • BUILDER
-          </p>
         </div>
 
         {/* CTA */}
@@ -149,7 +131,7 @@ export default async function SharePage({ params }: Props) {
             lineHeight: 1.6,
           }}
         >
-          🏝️ GET YOUR OWN BUILDER PASSPORT
+          🏝️ GET YOUR OWN BUILDER CARD, SHOW EVERYONE WHO YOU ARE
         </Link>
 
         <Link
@@ -159,7 +141,7 @@ export default async function SharePage({ params }: Props) {
             marginTop: "18px",
             color: "#ffe58a",
             textDecoration: "none",
-            fontSize: "8px",
+            fontSize: "12px",
           }}
         >
           ← BACK TO HACKER HOUSE GOA
@@ -169,11 +151,11 @@ export default async function SharePage({ params }: Props) {
           style={{
             marginTop: "30px",
             color: "#ffe58a",
-            fontSize: "7px",
+            fontSize: "10px",
             lineHeight: 1.8,
           }}
         >
-          BUILD SOMETHING. SHIP SOMETHING. 🌴
+          HUMANS RULE. WE PLAY.
         </p>
       </div>
     </main>

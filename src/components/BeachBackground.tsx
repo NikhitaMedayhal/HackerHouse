@@ -119,93 +119,6 @@ export default function BeachBackground({
         ))}
       </div>
 
-{/* Palm Tree */}
-<div
-  style={{
-    position: "absolute",
-    left: 120,      // Move entire tree left/right
-    bottom: 170,    // Move entire tree up/down
-    width: 64,
-    height: 96,
-  }}
->
-  {/* Trunk */}
-  <img
-    src="/tiles/trunk.png"
-    style={{
-      position: "absolute",
-      left: 24,
-      bottom: 0,
-      width: 16,
-      height: 16,
-      imageRendering: "pixelated",
-    }}
-  />
-
-  <img
-    src="/tiles/trunk.png"
-    style={{
-      position: "absolute",
-      left: 24,
-      bottom: 16,
-      width: 16,
-      height: 16,
-      imageRendering: "pixelated",
-    }}
-  />
-
-  <img
-    src="/tiles/trunk.png"
-    style={{
-      position: "absolute",
-      left: 24,
-      bottom: 32,
-      width: 16,
-      height: 16,
-      imageRendering: "pixelated",
-    }}
-  />
-
-  {/* Leaves */}
-  <img
-    src="/tiles/leaves_left.png"
-    style={{
-      position: "absolute",
-      left: 0,
-      bottom: 40,
-      width: 32,
-      height: 32,
-      imageRendering: "pixelated",
-    }}
-  />
-
-  <img
-    src="/tiles/leaves_mid.png"
-    style={{
-      position: "absolute",
-      left: 16,
-      bottom: 48,
-      width: 32,
-      height: 32,
-      imageRendering: "pixelated",
-    }}
-  />
-
-  <img
-    src="/tiles/leaves_right.png"
-    style={{
-      position: "absolute",
-      left: 32,
-      bottom: 40,
-      width: 32,
-      height: 32,
-      imageRendering: "pixelated",
-    }}
-  />
-</div>
-
-
-
 {/* Ocean — square-wave layers instead of curved swells */}      
       <div  style={{   
         position: "absolute",    
@@ -314,7 +227,7 @@ export default function BeachBackground({
             maxWidth: "420px",
           }}
         >
-          Your builder passport is waiting on the other side.
+          I see you've reached to HACKER HOUSE GOA! Congrats, but its ruled by humans :0, and everyone who knows humans know that they WILL welcome you, but only if you're one of them, so go shoo build your character card uh ahem sorry ID card and show 'em your a human too
         </div>
           <div className="press-enter" onClick={() => onEnter?.()}>
   ▶ PRESS ENTER
