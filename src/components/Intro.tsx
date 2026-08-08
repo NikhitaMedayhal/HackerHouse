@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import BeachBackground from "./BeachBackground";
 
@@ -25,6 +26,7 @@ type Star = { x: number; y: number; size: number; opacity: number };
 type Scene = "intro" | "popup" | "beach";
 
 export default function Intro() {
+  const router = useRouter();
   // Start at 0 on both server and client so the first render always matches.
   const [x, setX] = useState<number>(0);
   const [frame, setFrame] = useState<number>(0);
@@ -55,7 +57,7 @@ export default function Intro() {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (scene === "popup") {
         if (e.key === "Enter") {
-          setScene("beach");
+          router.push("/beach");
         }
         return;
       }

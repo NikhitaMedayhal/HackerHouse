@@ -63,7 +63,11 @@ const PIXEL_TEXT_SHADOW = [
   "6px 6px 0 rgba(0,0,0,0.4)",
 ].join(", ");
 
-export default function BeachBackground() {
+export default function BeachBackground({
+  onEnter,
+}: {
+  onEnter?: () => void;
+}) {
   return (
     <div className="absolute inset-0 overflow-hidden bg-[#0F3D2E]">
       {/* Pull in a genuine bitmap face for the headline treatment */}
@@ -312,7 +316,7 @@ export default function BeachBackground() {
         >
           Your builder passport is waiting on the other side.
         </div>
-          <div className="press-enter" onClick={() => console.log("Enter Goa")}>
+          <div className="press-enter" onClick={() => onEnter?.()}>
   ▶ PRESS ENTER
 </div>
       </div>
