@@ -120,7 +120,7 @@ export default function BeachBackground({
       </div>
 
 {/* Ocean — square-wave layers instead of curved swells */}      
-      <div  style={{   
+      {/* <div  style={{   
         position: "absolute",    
         bottom: "128px",    
         width: "100%",    
@@ -129,7 +129,22 @@ export default function BeachBackground({
         backgroundRepeat: "repeat",    
         imageRendering: "pixelated",  }}
         />
-
+   */}
+      {/* Ocean — animated wave tile */}
+  <div
+    className="wave-layer"
+    style={{
+      position: "absolute",
+      bottom: "128px",
+      width: "100%",
+      height: "140px",
+      backgroundImage: "url('/tiles/wave-user.png')",
+      backgroundRepeat: "repeat",
+      backgroundSize: "60px 60px",
+      imageRendering: "pixelated",
+    }}
+  />
+      
       {/* Sand — crisp dither pattern instead of soft radial dots */}
       <div
   style={{
@@ -233,6 +248,20 @@ export default function BeachBackground({
   ▶ PRESS ENTER
 </div>
       </div>
+      <style jsx>{`
+        @keyframes wave-scroll {
+          from { background-position: 0 0; }
+          to { background-position: -60px 0; }
+        }
+        .wave-layer {
+          animation: wave-scroll 1.6s steps(4) infinite;
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .wave-layer {
+            animation: none;
+          }
+        }
+      `}</style>
     </div>
   );
 }
