@@ -32,7 +32,7 @@ export default function BuilderPage() {
     role: "",
     project: "",
     github: "",
-    humour : false,
+    humour: false,
   });
 
   const handlePhotoUpload = (
@@ -69,7 +69,7 @@ You can go get one too 👾❤️ YOU BETTER GET ONE 👹 (I heard humans use th
 #HackerHouseGoa #FrameInGoa #ILoveHumans
 
 ~🧍🏽‍♀️(maybe)`
-;
+    ;
 
   const capturePassportBlob = async (): Promise<Blob | null> => {
     if (!passportRef.current) return null;
@@ -247,70 +247,70 @@ You can go get one too 👾❤️ YOU BETTER GET ONE 👹 (I heard humans use th
 
           {/* ================= SENSE OF HUMOUR ================= */}
 
-<div
-  style={{
-    marginTop: "5px",
-    marginBottom: "20px",
-    padding: "14px",
-    background: "#0B6B3A",
-    border: "3px solid black",
-    boxShadow: "4px 4px 0 black",
-  }}
->
-  <label
-    style={{
-      display: "block",
-      color: "#f7c948",
-      fontSize: "9px",
-      lineHeight: 1.8,
-      marginBottom: "8px",
-    }}
-  >
-    SENSE OF HUMOUR
-  </label>
+          <div
+            style={{
+              marginTop: "5px",
+              marginBottom: "20px",
+              padding: "14px",
+              background: "#0B6B3A",
+              border: "3px solid black",
+              boxShadow: "4px 4px 0 black",
+            }}
+          >
+            <label
+              style={{
+                display: "block",
+                color: "#f7c948",
+                fontSize: "9px",
+                lineHeight: 1.8,
+                marginBottom: "8px",
+              }}
+            >
+              SENSE OF HUMOUR
+            </label>
 
-  <label
-    style={{
-      display: "flex",
-      alignItems: "flex-start",
-      gap: "8px",
-      cursor: "pointer",
-      color: "#ffe58a",
-      fontSize: "10px",
-      lineHeight: 1.8,
-    }}
-  >
-    <input
-      type="checkbox"
-      checked={form.humour}
-      onChange={(e) =>
-        setForm({
-          ...form,
-          humour: e.target.checked,
-        })
-      }
-      style={{
-        width: "16px",
-        height: "16px",
-        accentColor: "#ff4f9a",
-        flexShrink: 0,
-      }}
-    />
+            <label
+              style={{
+                display: "flex",
+                alignItems: "flex-start",
+                gap: "8px",
+                cursor: "pointer",
+                color: "#ffe58a",
+                fontSize: "10px",
+                lineHeight: 1.8,
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={form.humour}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    humour: e.target.checked,
+                  })
+                }
+                style={{
+                  width: "16px",
+                  height: "16px",
+                  accentColor: "#ff4f9a",
+                  flexShrink: 0,
+                }}
+              />
 
-    <span>
-      I LOVE HUMANS 😃
-      <br />
-      <span
-        style={{
-          color: "#ff4f9a",
-          fontSize: "10px",
-        }}
-      >
-        Select this if you read all the captions and showed your teeth 🦷.
-      </span>
-    </span>
-  </label>
-</div>
+              <span>
+                I LOVE HUMANS 😃
+                <br />
+                <span
+                  style={{
+                    color: "#ff4f9a",
+                    fontSize: "10px",
+                  }}
+                >
+                  Select this if you read all the captions and showed your teeth 🦷.
+                </span>
+              </span>
+            </label>
+          </div>
 
           {/* PHOTO UPLOAD */}
 
@@ -417,9 +417,40 @@ You can go get one too 👾❤️ YOU BETTER GET ONE 👹 (I heard humans use th
                   background: "#f7c948",
                   border: "3px solid black",
                   padding: "15px",
-                  color: "#ff4f9a"
+                  color: "#ff4f9a",
+                  position: "relative",
                 }}
               >
+                {/* GOA PIXEL SCENE */}
+                <img
+                  src="/goa.png"
+                  alt="Goa pixel art"
+                  style={{
+                    position: "absolute",
+                    right: "-40px",
+                    bottom: "-15px",
+                    width: "500px",
+                    height: "auto",
+                    imageRendering: "pixelated",
+                    pointerEvents: "none",
+                    zIndex: 0,
+                  }}
+                />
+                {/* STAMP */}
+                <img
+                  src="/stamp.png"
+                  alt=""
+                  style={{
+                    position: "absolute",
+                    right: "-40px",
+                    top: "40px",
+                    width: "200px",
+                    height: "115px",
+                    imageRendering: "pixelated",
+                    pointerEvents: "none",
+                    zIndex: 2,
+                  }}
+                />
                 {/* HEADER */}
 
                 <div
@@ -550,55 +581,71 @@ You can go get one too 👾❤️ YOU BETTER GET ONE 👹 (I heard humans use th
               </div>
             </div>
 
-                        {/* ================= CONGRATULATIONS ================= */}
+            {/* ================= CONGRATULATIONS ================= */}
 
-        <div
-          style={{
-            marginTop: "25px",
-            marginBottom: "20px",
-            padding: "16px",
-            background: "#128C52",
-            border: "3px solid black",
-            boxShadow: "5px 5px 0 black",
-            textAlign: "center",
-            color: "#ffe58a",
-          }}
-        >
-          <div
-            style={{
-              fontSize: "11px",
-              lineHeight: 1.8,
-              color: "#ff4f9a",
-              marginBottom: "10px",
-            }}
-          >
-            CONGRATS. YOU DID IT.
-          </div>
+            <div
+              style={{
+                marginTop: "25px",
+                marginBottom: "20px",
+                padding: "16px",
+                background: "#128C52",
+                border: "3px solid black",
+                boxShadow: "5px 5px 0 black",
+                textAlign: "center",
+                color: "#ffe58a",
+              }}
+            >
+              <div
+                style={{
+                  fontSize: "9px",
+                  lineHeight: 1.8,
+                  color: "#ff4f9a",
+                  marginBottom: "10px",
+                }}
+              >
+                PLAYER REGISTERED.
+              </div>
 
-          <div
-            style={{
-              fontSize: "8px",
-              lineHeight: 2,
-              marginBottom: "12px",
-            }}
-          >
-            I SUPPOSE YOU'RE
-            <br />
-            OFFICIALLY A PERSON NOW.
-          </div>
+              <div
+                style={{
+                  fontSize: "8px",
+                  lineHeight: 2,
+                  marginBottom: "12px",
+                }}
+              >
+                CONGRATS. YOU DID IT.
+                <br />
+                I SUPPOSE YOU'RE
+                <br />
+                OFFICIALLY A PLAYER NOW.
+              </div>
 
-          <div
-            style={{
-              fontSize: "9px",
-              lineHeight: 1.8,
-              color: "#f7c948",
-            }}
-          >
-            NOW GO SHOW 'EM
-            <br />
-            WHO OWNS THIS PLACE.
-          </div>
-        </div>
+              <div
+                style={{
+                  fontSize: "7px",
+                  lineHeight: 2,
+                  color: "#f7c948",
+                  marginBottom: "12px",
+                }}
+              >
+                MISSION: HACKER HOUSE
+                <br />
+                LOCATION: GOA
+                <br />
+                STATUS: UNLOCKED
+              </div>
+              <div
+                style={{
+                  fontSize: "9px",
+                  lineHeight: 1.8,
+                  color: "#f7c948",
+                }}
+              >
+                NOW GO SHOW 'EM
+                <br />
+                WHO OWNS THIS PLACE.
+              </div>
+            </div>
             {/* ================= BUTTONS ================= */}
 
             <div
