@@ -348,7 +348,7 @@ You can go get one too 👾❤️ YOU BETTER GET ONE 👹 (I heard humans use th
             name="city"
             value={form.city}
             onChange={handleChange}
-            style={errors.country ? inputErrorStyle : inputStyle}
+            style={errors.city ? inputErrorStyle : inputStyle}
           />
 
           <label style={{ fontSize: "11px", lineHeight: 1.8 }}>
@@ -861,7 +861,7 @@ You can go get one too 👾❤️ YOU BETTER GET ONE 👹 (I heard humans use th
                 <br />
                 I SUPPOSE YOU'RE
                 <br />
-                OFFICIALLY A PLAYER NOW.
+                OFFICIALLY A HUMAN NOW.
               </div>
 
               <div
