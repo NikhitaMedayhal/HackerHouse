@@ -189,7 +189,7 @@ You can go get one too 👾❤️ YOU BETTER GET ONE 👹 (I heard humans use th
     const blob = await capturePassportBlob();
     if (!blob) return;
 
-    const filename = `${form.name || "builder"}-passport.png`;
+    const filename = `${form.name || "builder"}-ID.png`;
 
     const file = new File([blob], filename, { type: "image/png" });
     if (navigator.canShare?.({ files: [file] })) {
