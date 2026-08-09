@@ -174,6 +174,14 @@ You can go get one too 👾❤️ YOU BETTER GET ONE 👹 (I heard humans use th
   const capturePassportBlob = async (): Promise<Blob | null> => {
     if (!passportRef.current) return null;
 
+    // Make sure the pixel font is fully loaded before we snapshot —
+    // otherwise slower/different devices fall back to a system font
+    // with different character widths, which reflows text and causes
+    // it to overlap the absolutely-positioned images.
+    if (typeof document !== "undefined" && "fonts" in document) {
+      await document.fonts.ready;
+    }
+
     const canvas = await html2canvas(passportRef.current, {
       scale: 3,
       backgroundColor: "#f7c948",
@@ -624,13 +632,23 @@ You can go get one too 👾❤️ YOU BETTER GET ONE 👹 (I heard humans use th
         {showPassport && (
           <>
             <div
+              style={{
+                width: "100%",
+                overflowX: "auto",
+                marginTop: "20px",
+              }}
+            >
+            <div
               ref={passportRef}
               style={{
+                width: "390px",
+                maxWidth: "none",
                 border: "5px solid #0B6B3A",
                 padding: "15px",
                 background: "#ffe58a",
                 boxSizing: "border-box",
-                marginTop: "20px",
+                marginLeft: "auto",
+                marginRight: "auto",
                 color: "#ff4f9a"
               }}
             >
@@ -814,6 +832,7 @@ You can go get one too 👾❤️ YOU BETTER GET ONE 👹 (I heard humans use th
                   </>
                 )}
               </div>
+            </div>
             </div>
 
             {photo && (
