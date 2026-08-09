@@ -64,7 +64,6 @@ export default async function SharePage({ params }: Props) {
             background: "#f7c948",
             border: "4px solid black",
             padding: "20px",
-            boxShadow: "6px 6px 0 black",
           }}
         >
           <h1
@@ -96,10 +95,8 @@ export default async function SharePage({ params }: Props) {
             background: "#0B6B3A",
             border: "4px solid #0B6B3A",
             padding: "15px",
-            boxShadow: "6px 6px 0 black",
           }}
         >
-          
           {/* TEMPORARY IMAGE */}
           <Image
             src={`/api/passport/${id}`}
@@ -117,7 +114,6 @@ export default async function SharePage({ params }: Props) {
             }}
             sizes="(max-width: 420px) 100vw, 420px"
           />
-
         </div>
 
         {/* CTA */}
@@ -131,7 +127,6 @@ export default async function SharePage({ params }: Props) {
             background: "#f7c948",
             color: "black",
             border: "4px solid black",
-            boxShadow: "5px 5px 0 black",
             textDecoration: "none",
             fontSize: "10px",
             lineHeight: 1.6,

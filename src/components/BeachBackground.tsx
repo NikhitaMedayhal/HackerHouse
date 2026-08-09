@@ -4,7 +4,8 @@
 // combined with shape-rendering="crispEdges" this reads as genuine 8-bit art
 // instead of a blurry/anti-aliased approximation of one.
 
-const SUN_PIXEL = 8;
+// (sun cell size now lives in the --sun-px CSS variable, set inline where
+// the sun is rendered, so it can scale with viewport width)
 
 function buildCircleCells(radius: number) {
   const cells: { x: number; y: number }[] = [];
@@ -81,12 +82,19 @@ export default function BeachBackground({
   }}
 />
 
-      {/* Sun — built from a bitmap of square cells, no border-radius/blur */}
+      {/* Sun — built from a bitmap of square cells, no border-radius/blur.
+          Cell size comes from a CSS var (--sun-px) that scales with the
+          viewport, so the whole grid shrinks proportionally on phones
+          instead of staying a fixed 168px and crowding the welcome card. */}
       <div
-        className="absolute right-24 top-16"
+        className="absolute"
         style={{
-          width: (HALO_RADIUS * 2 + 1) * SUN_PIXEL,
-          height: (HALO_RADIUS * 2 + 1) * SUN_PIXEL,
+          right: "clamp(12px, 6vw, 96px)",
+          top: "clamp(12px, 5vh, 64px)",
+          // @ts-expect-error -- CSS custom property, not a known CSSProperties key
+          "--sun-px": "clamp(4px, 1.6vw, 8px)",
+          width: `calc(${HALO_RADIUS * 2 + 1} * var(--sun-px))`,
+          height: `calc(${HALO_RADIUS * 2 + 1} * var(--sun-px))`,
           imageRendering: "pixelated",
         }}
       >
@@ -95,10 +103,10 @@ export default function BeachBackground({
             key={`halo-${i}`}
             className="absolute"
             style={{
-              left: (c.x + HALO_RADIUS) * SUN_PIXEL,
-              top: (c.y + HALO_RADIUS) * SUN_PIXEL,
-              width: SUN_PIXEL,
-              height: SUN_PIXEL,
+              left: `calc(${c.x + HALO_RADIUS} * var(--sun-px))`,
+              top: `calc(${c.y + HALO_RADIUS} * var(--sun-px))`,
+              width: "var(--sun-px)",
+              height: "var(--sun-px)",
               background: "#FFF3C4",
               opacity: 0.22,
             }}
@@ -109,10 +117,10 @@ export default function BeachBackground({
             key={`sun-${i}`}
             className="absolute"
             style={{
-              left: (c.x + HALO_RADIUS) * SUN_PIXEL,
-              top: (c.y + HALO_RADIUS) * SUN_PIXEL,
-              width: SUN_PIXEL,
-              height: SUN_PIXEL,
+              left: `calc(${c.x + HALO_RADIUS} * var(--sun-px))`,
+              top: `calc(${c.y + HALO_RADIUS} * var(--sun-px))`,
+              width: "var(--sun-px)",
+              height: "var(--sun-px)",
               background: c.y < -SUN_RADIUS / 3 ? "#FFFBEA" : "#FFEB9E",
             }}
           />
@@ -159,12 +167,16 @@ export default function BeachBackground({
 />
       {/* Welcome copy — sits on its own dark-green pixel card, not the sky */}
       <div
-        className="absolute left-12 top-16 max-w-xl z-10"
+        className="absolute z-10"
         style={{
+          left: "clamp(16px, 6vw, 48px)",
+          top: "clamp(16px, 6vh, 64px)",
+          width: "min(88vw, 576px)",
           background: "#1B6B4A",
           boxShadow: "4px 4px 0 #071F17, 8px 8px 0 rgba(0,0,0,0.35)",
-          padding: "28px 32px",
+          padding: "clamp(16px, 4vw, 28px) clamp(18px, 5vw, 32px)",
           imageRendering: "pixelated",
+          boxSizing: "border-box",
         }}
       >
         <div
@@ -172,7 +184,7 @@ export default function BeachBackground({
           style={{
             color: "#F4EFDD",
             fontFamily: PIXEL_FONT,
-            fontSize: "10px",
+            fontSize: "clamp(8px, 2.2vw, 10px)",
             lineHeight: 1.6,
             letterSpacing: "2px",
             textShadow: "2px 2px 0 #000",
@@ -188,8 +200,8 @@ export default function BeachBackground({
             style={{
               color: "#F5D949",
               fontFamily: PIXEL_FONT,
-              fontSize: "34px",
-              lineHeight: 1.9,
+              fontSize: "clamp(20px, 6.5vw, 34px)",
+              lineHeight: 1.35,
               letterSpacing: "2px",
               textShadow: PIXEL_TEXT_SHADOW,
               imageRendering: "pixelated",
@@ -206,14 +218,14 @@ export default function BeachBackground({
           <div
             style={{
               position: "absolute",
-              right: "-18px",
-              top: "58px",
+              right: "-4%",
+              top: "62%",
               transform: "rotate(-7deg)",
               background: "#EC4899",
               boxShadow: "3px 3px 0 #831843, 6px 6px 0 rgba(0,0,0,0.35)",
               clipPath:
                 "polygon(0 6px, 6px 6px, 6px 0, calc(100% - 6px) 0, calc(100% - 6px) 6px, 100% 6px, 100% calc(100% - 6px), calc(100% - 6px) calc(100% - 6px), calc(100% - 6px) 100%, 6px 100%, 6px calc(100% - 6px), 0 calc(100% - 6px))",
-              padding: "10px 14px",
+              padding: "clamp(6px, 1.6vw, 10px) clamp(8px, 2.2vw, 14px)",
               imageRendering: "pixelated",
             }}
           >
@@ -221,7 +233,7 @@ export default function BeachBackground({
               style={{
                 color: "#FDF2F8",
                 fontFamily: PIXEL_FONT,
-                fontSize: "13px",
+                fontSize: "clamp(9px, 2.6vw, 13px)",
                 letterSpacing: "1px",
               }}
             >
@@ -235,18 +247,31 @@ export default function BeachBackground({
           style={{
             color: "#F4EFDD",
             fontFamily: PIXEL_FONT,
-            fontSize: "11px",
+            fontSize: "clamp(9px, 2.6vw, 11px)",
             lineHeight: 1.8,
             letterSpacing: "0.5px",
             textShadow: "2px 2px 0 #000",
-            maxWidth: "420px",
+            maxWidth: "100%",
           }}
         >
           I see you've reached to HACKER HOUSE GOA! Congrats, but its ruled by humans :0, and everyone who knows humans know that they WILL welcome you, but only if you're one of them, so go shoo build your character card uh ahem sorry ID card and show 'em your a human too
         </div>
-          <div className="press-enter" onClick={() => onEnter?.()}>
-  ▶ PRESS ENTER
-</div>
+          <div
+            className="press-enter"
+            onClick={() => onEnter?.()}
+            style={{
+              // Fallback sizing in case the external .press-enter class
+              // doesn't already guarantee a comfortable tap target —
+              // ~44px is the usual minimum for touch.
+              minHeight: "44px",
+              display: "inline-flex",
+              alignItems: "center",
+              cursor: "pointer",
+              fontSize: "clamp(10px, 2.8vw, 13px)",
+            }}
+          >
+            ▶ PRESS ENTER
+          </div>
       </div>
       <style jsx>{`
         @keyframes wave-scroll {

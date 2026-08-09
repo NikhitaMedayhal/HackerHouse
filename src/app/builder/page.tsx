@@ -7,7 +7,6 @@ import PacmanCoconut from "@/components/PacmanCoconut";
 const PIXEL_FONT =
   "'Press Start 2P', 'Courier New', Courier, monospace";
 
-// Fields the passport can't really do without — all treated as required.
 const REQUIRED_FIELDS = ["name", "city", "role", "project", "github"] as const;
 type RequiredField = (typeof REQUIRED_FIELDS)[number];
 
@@ -47,8 +46,6 @@ const inputStyle = {
   fontSize: "10px",
 };
 
-// Same as inputStyle but flags the field red so it's obvious which one
-// still needs filling in.
 const inputErrorStyle = {
   ...inputStyle,
   border: "2px solid #ff3b3b",
@@ -69,6 +66,10 @@ export default function BuilderPage() {
   const [zoom, setZoom] = useState(1);
   const [imgSize, setImgSize] = useState<{ width: number; height: number } | null>(null);
 
+  const [playerId, setPlayerId] = useState<string | null>(null);
+  const [isGeneratingId, setIsGeneratingId] = useState(false);
+  const [generateError, setGenerateError] = useState<string | null>(null);
+
   const [form, setForm] = useState({
     name: "",
     city: "",
@@ -78,8 +79,6 @@ export default function BuilderPage() {
     humour: false,
   });
 
-  // Tracks which required fields are currently empty, so we can highlight
-  // them and show a message instead of silently generating a blank card.
   const [errors, setErrors] = useState<Partial<Record<RequiredField, boolean>>>({});
 
   const handlePhotoUpload = (
@@ -157,8 +156,6 @@ export default function BuilderPage() {
       [name]: value,
     }));
 
-    // If this field was flagged as missing, clear that flag as soon as
-    // the user types/selects something — no need to wait for re-submit.
     if (value.trim() && name in errors) {
       setErrors((prev) => {
         const next = { ...prev };
@@ -169,11 +166,8 @@ export default function BuilderPage() {
   };
 
   const TWEET_MESSAGE = `I just got my character card uh no no sorry AHEM, my ID for Hacker House Goa 2026!
-
 You can go get one too 👾❤️ YOU BETTER GET ONE 👹 (I heard humans use threatening so 💖 :0)
-
 #HackerHouseGoa #FrameInGoa #ILoveHumans
-
 ~🧍🏽‍♀️(maybe)`
     ;
 
@@ -197,17 +191,13 @@ You can go get one too 👾❤️ YOU BETTER GET ONE 👹 (I heard humans use th
 
     const filename = `${form.name || "builder"}-passport.png`;
 
-    // iOS Safari ignores the `download` attribute on <a> tags — it just
-    // opens the image instead of saving it. Web Share (when available)
-    // gives mobile users a real "Save Image" option instead.
     const file = new File([blob], filename, { type: "image/png" });
     if (navigator.canShare?.({ files: [file] })) {
       try {
         await navigator.share({ files: [file], title: "My Hacker House Passport" });
         return;
       } catch (err) {
-        if ((err as Error).name === "AbortError") return; // user cancelled
-        // otherwise fall through to the normal download below
+        if ((err as Error).name === "AbortError") return; 
       }
     }
 
@@ -222,10 +212,6 @@ You can go get one too 👾❤️ YOU BETTER GET ONE 👹 (I heard humans use th
   const shareToX = async () => {
     setIsPosting(true);
 
-    // Mobile Safari blocks window.open() unless it happens synchronously
-    // inside the click handler. Opening a blank tab now — before any
-    // `await` — and redirecting it once the upload finishes keeps it
-    // inside that user-gesture window instead of getting silently blocked.
     const popup = window.open("", "_blank");
 
     try {
@@ -269,7 +255,7 @@ You can go get one too 👾❤️ YOU BETTER GET ONE 👹 (I heard humans use th
     }
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const newErrors: Partial<Record<RequiredField, boolean>> = {};
 
     REQUIRED_FIELDS.forEach((field) => {
@@ -285,7 +271,29 @@ You can go get one too 👾❤️ YOU BETTER GET ONE 👹 (I heard humans use th
     }
 
     setErrors({});
-    setShowPassport(true);
+    setGenerateError(null);
+    setIsGeneratingId(true);
+
+    try {
+      const res = await fetch("/api/player-id", { method: "POST" });
+      const resJson = await res.json();
+
+      if (!res.ok) {
+        throw new Error(resJson?.error || `Request failed (${res.status})`);
+      }
+
+      setPlayerId(resJson.id);
+      setShowPassport(true);
+    } catch (error) {
+      console.error(error);
+      const message = error instanceof Error ? error.message : "Unknown error";
+      setGenerateError(
+        `Couldn't issue your player ID: ${message}. Try again in a moment.`
+      );
+      setShowPassport(false);
+    } finally {
+      setIsGeneratingId(false);
+    }
   };
 
 
@@ -299,6 +307,7 @@ You can go get one too 👾❤️ YOU BETTER GET ONE 👹 (I heard humans use th
         alignItems: "flex-start",
         padding: "40px 20px",
         fontFamily: PIXEL_FONT,
+        overflowX: "hidden",
       }}
     >
       <div
@@ -368,7 +377,7 @@ You can go get one too 👾❤️ YOU BETTER GET ONE 👹 (I heard humans use th
           />
 
           <label style={{ fontSize: "11px", lineHeight: 1.8 }}>
-            Where do you spawn?
+            Where do you spawn? (Place 😭)
           </label>
 
           <input
@@ -398,7 +407,7 @@ You can go get one too 👾❤️ YOU BETTER GET ONE 👹 (I heard humans use th
           </select>
 
           <label style={{ fontSize: "11px", lineHeight: 1.8 }}>
-            Name the crew you're bringing to Goa.
+            Name of the crew you're bringing to Goa.
           </label>
 
           <input
@@ -567,26 +576,48 @@ You can go get one too 👾❤️ YOU BETTER GET ONE 👹 (I heard humans use th
                 textAlign: "center",
               }}
             >
-              Fill in the highlighted fields first, human.
+              Fill in the highlighted fields first, <del>not</del> human.
+            </div>
+          )}
+
+          {generateError && (
+            <div
+              style={{
+                marginTop: "10px",
+                marginBottom: "-4px",
+                padding: "10px 12px",
+                background: "#3a0000",
+                border: "2px solid #ff3b3b",
+                color: "#ffb3b3",
+                fontSize: "9px",
+                lineHeight: 1.6,
+                textAlign: "center",
+              }}
+            >
+              {generateError}
             </div>
           )}
 
           <button
             onClick={handleSubmit}
+            disabled={isGeneratingId}
             style={{
               width: "100%",
               marginTop: "10px",
               padding: "12px",
               background: "#f7c948",
               border: "3px solid black",
-              cursor: "pointer",
+              cursor: isGeneratingId ? "default" : "pointer",
+              opacity: isGeneratingId ? 0.7 : 1,
               fontWeight: "bold",
               fontSize: "11px",
               fontFamily: PIXEL_FONT,
               boxShadow: "4px 4px 0 black",
             }}
           >
-            Generate ID (IN HUMAN LANGUAGE, 'CAUSE THEY'RE SUPRISINGLY INCOMPETENT FOR THEY HAVE VERY HIGH STANDARDS)
+            {isGeneratingId
+              ? "ISSUING YOUR ID…"
+              : "Generate ID (IN HUMAN LANGUAGE, 'CAUSE THEY'RE SUPRISINGLY INCOMPETENT FOR THEY HAVE VERY HIGH STANDARDS)"}
           </button>
 
           <PacmanCoconut />
@@ -637,7 +668,7 @@ You can go get one too 👾❤️ YOU BETTER GET ONE 👹 (I heard humans use th
                     position: "absolute",
                     right: "-40px",
                     bottom: "-15px",
-                    width: "500px",
+                    width: "145%",
                     height: "auto",
                     imageRendering: "pixelated",
                     pointerEvents: "none",
@@ -650,10 +681,10 @@ You can go get one too 👾❤️ YOU BETTER GET ONE 👹 (I heard humans use th
                   alt=""
                   style={{
                     position: "absolute",
-                    right: "-40px",
-                    top: "40px",
-                    width: "200px",
-                    height: "115px",
+                    right: "-10px",
+                    top: "95px",
+                    width: "45%",
+                    height: "auto",
                     imageRendering: "pixelated",
                     pointerEvents: "none",
                     zIndex: 2,
@@ -766,7 +797,7 @@ You can go get one too 👾❤️ YOU BETTER GET ONE 👹 (I heard humans use th
                   </div>
                 </div>
 
-                {/* PROJECT */}
+                {/* TEAM NAME */}
 
                 <div
                   style={{
@@ -778,7 +809,7 @@ You can go get one too 👾❤️ YOU BETTER GET ONE 👹 (I heard humans use th
                     wordBreak: "break-word",
                   }}
                 >
-                  <strong>PROJECT</strong>
+                  <strong>TEAM NAME</strong>
                   <br />
                   {form.project || "—"}
 
@@ -802,6 +833,14 @@ You can go get one too 👾❤️ YOU BETTER GET ONE 👹 (I heard humans use th
                 }}
               >
                 BUILDER CARD • GOA 2026
+                {playerId && (
+                  <>
+                    <br />
+                    <span style={{ letterSpacing: "1px", opacity: 0.75 }}>
+                      ID: {playerId}
+                    </span>
+                  </>
+                )}
               </div>
             </div>
 
