@@ -137,7 +137,7 @@ export default function BeachBackground({
     bottom: 0,
     width: "100%",
     height: "128px",
-    backgroundImage: "url('/tiles/sand.png')",
+    backgroundImage: "url('/tiles/sand-beach.png')",
     backgroundRepeat: "repeat",
     imageRendering: "pixelated",
   }}
