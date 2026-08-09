@@ -8,7 +8,7 @@ const PIXEL_FONT =
   "'Press Start 2P', 'Courier New', Courier, monospace";
 
 // Fields the passport can't really do without — all treated as required.
-const REQUIRED_FIELDS = ["name", "country", "role", "project", "github"] as const;
+const REQUIRED_FIELDS = ["name", "city", "role", "project", "github"] as const;
 type RequiredField = (typeof REQUIRED_FIELDS)[number];
 
 const inputStyle = {
@@ -36,8 +36,13 @@ export default function BuilderPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const passportRef = useRef<HTMLDivElement | null>(null);
   const [photo, setPhoto] = useState<string | null>(null);
+  const [photoPosition, setPhotoPosition] = useState({ x: 0, y: 0 });
+  const [isDraggingPhoto, setIsDraggingPhoto] = useState(false);
+  const photoDragStart = useRef({ x: 0, y: 0 });
+  const photoStartPosition = useRef({ x: 0, y: 0 });
   const [showPassport, setShowPassport] = useState(false);
   const [isPosting, setIsPosting] = useState(false);
+  const [zoom, setZoom] = useState(1);
 
   const [form, setForm] = useState({
     name: "",
@@ -65,9 +70,53 @@ export default function BuilderPage() {
 
     reader.onloadend = () => {
       setPhoto(reader.result as string);
+      setPhotoPosition({ x: 0, y: 0 });
     };
 
     reader.readAsDataURL(file);
+  };
+  const handlePhotoPointerDown = (
+    e: React.PointerEvent<HTMLImageElement>
+  ) => {
+    e.preventDefault();
+
+    setIsDraggingPhoto(true);
+
+    photoDragStart.current = {
+      x: e.clientX,
+      y: e.clientY,
+    };
+
+    photoStartPosition.current = {
+      x: photoPosition.x,
+      y: photoPosition.y,
+    };
+
+    e.currentTarget.setPointerCapture(e.pointerId);
+  };
+
+  const handlePhotoPointerMove = (
+    e: React.PointerEvent<HTMLImageElement>
+  ) => {
+    if (!isDraggingPhoto) return;
+
+    const deltaX = e.clientX - photoDragStart.current.x;
+    const deltaY = e.clientY - photoDragStart.current.y;
+
+    setPhotoPosition({
+      x: photoStartPosition.current.x + deltaX,
+      y: photoStartPosition.current.y + deltaY,
+    });
+  };
+
+  const handlePhotoPointerUp = (
+    e: React.PointerEvent<HTMLImageElement>
+  ) => {
+    setIsDraggingPhoto(false);
+
+    if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    }
   };
 
   const handleChange = (
@@ -263,7 +312,7 @@ You can go get one too 👾❤️ YOU BETTER GET ONE 👹 (I heard humans use th
                 letterSpacing: "1px",
               }}
             >
-             CHARACTER REGISTRATION
+              CHARACTER REGISTRATION
             </div>
 
             <div
@@ -397,7 +446,7 @@ You can go get one too 👾❤️ YOU BETTER GET ONE 👹 (I heard humans use th
               />
 
               <span>
-                I LOVE HUMANS 😃
+                I LOVE HUMANS
                 <br />
                 <span
                   style={{
@@ -495,24 +544,24 @@ You can go get one too 👾❤️ YOU BETTER GET ONE 👹 (I heard humans use th
           )}
 
           <button
-  onClick={handleSubmit}
-  style={{
-    width: "100%",
-    marginTop: "10px",
-    padding: "12px",
-    background: "#f7c948",
-    border: "3px solid black",
-    cursor: "pointer",
-    fontWeight: "bold",
-    fontSize: "11px",
-    fontFamily: PIXEL_FONT,
-    boxShadow: "4px 4px 0 black",
-  }}
->
-  Generate ID (IN HUMAN LANGUAGE, 'CAUSE THEY'RE SUPRISINGLY INCOMPETENT FOR THEY HAVE VERY HIGH STANDARDS)
-</button>
+            onClick={handleSubmit}
+            style={{
+              width: "100%",
+              marginTop: "10px",
+              padding: "12px",
+              background: "#f7c948",
+              border: "3px solid black",
+              cursor: "pointer",
+              fontWeight: "bold",
+              fontSize: "11px",
+              fontFamily: PIXEL_FONT,
+              boxShadow: "4px 4px 0 black",
+            }}
+          >
+            Generate ID (IN HUMAN LANGUAGE, 'CAUSE THEY'RE SUPRISINGLY INCOMPETENT FOR THEY HAVE VERY HIGH STANDARDS)
+          </button>
 
-<PacmanCoconut />
+          <PacmanCoconut />
         </div>
 
         {/* ================= PASSPORT ================= */}
@@ -540,6 +589,7 @@ You can go get one too 👾❤️ YOU BETTER GET ONE 👹 (I heard humans use th
                 color: "#ff4f9a"
               }}
             >
+
               <div
                 style={{
                   background: "#f7c948",
@@ -549,6 +599,7 @@ You can go get one too 👾❤️ YOU BETTER GET ONE 👹 (I heard humans use th
                   position: "relative",
                 }}
               >
+
                 {/* GOA PIXEL SCENE */}
                 <img
                   src="/goa.png"
@@ -614,17 +665,29 @@ You can go get one too 👾❤️ YOU BETTER GET ONE 👹 (I heard humans use th
                       background: "#128C52",
                       flexShrink: 0,
                       overflow: "hidden",
+                      position: "relative",
+                      touchAction: "none",
                     }}
                   >
                     {photo ? (
                       <img
                         src={photo}
                         alt="Builder"
+                        onPointerDown={handlePhotoPointerDown}
+                        onPointerMove={handlePhotoPointerMove}
+                        onPointerUp={handlePhotoPointerUp}
+                        onPointerCancel={handlePhotoPointerUp}
                         style={{
-                          width: "100%",
+                          position: "absolute",
+                          left: "50%",
+                          top: "50%",
+                          width: "auto",
                           height: "100%",
-                          objectFit: "cover",
-                          imageRendering: "pixelated",
+                          maxWidth: "none",
+                          transform: `translate(-50%, -50%) translate(${photoPosition.x}px, ${photoPosition.y}px) scale(${zoom})`,
+                          cursor: isDraggingPhoto ? "grabbing" : "grab",
+                          userSelect: "none",
+                          touchAction: "none",
                         }}
                       />
                     ) : (
@@ -709,6 +772,56 @@ You can go get one too 👾❤️ YOU BETTER GET ONE 👹 (I heard humans use th
                 BUILDER CARD • GOA 2026
               </div>
             </div>
+
+            {/* ZOOM CONTROL — OUTSIDE THE ID CARD */}
+
+            {photo && (
+              <div
+                style={{
+                  marginTop: "12px",
+                  textAlign: "center",
+                  width: "100%",
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: "10px",
+                    fontFamily: PIXEL_FONT,
+                    color: "#ff4f9a",
+                    marginBottom: "4px",
+                    letterSpacing: "1px",
+                  }}
+                >
+                  POSITION YOUR HUMAN
+                </div>
+
+                <div
+                  style={{
+                    fontSize: "7px",
+                    fontFamily: PIXEL_FONT,
+                    color: "#fff",
+                    marginBottom: "6px",
+                    letterSpacing: "0.5px",
+                  }}
+                >
+                  DRAG TO FRAME • SLIDE TO ZOOM
+                </div>
+
+                <input
+                  type="range"
+                  min="1"
+                  max="3"
+                  step="0.05"
+                  value={zoom}
+                  onChange={(e) => setZoom(Number(e.target.value))}
+                  style={{
+                    width: "160px",
+                    accentColor: "#ff4f9a",
+                    cursor: "pointer",
+                  }}
+                />
+              </div>
+            )}
 
             {/* ================= CONGRATULATIONS ================= */}
 
@@ -830,6 +943,6 @@ You can go get one too 👾❤️ YOU BETTER GET ONE 👹 (I heard humans use th
           </>
         )}
       </div>
-    </main>
+    </main >
   );
 }
