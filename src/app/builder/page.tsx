@@ -581,7 +581,7 @@ You can go get one too 👾❤️ YOU BETTER GET ONE 👹 (I heard humans use th
             <div
               ref={passportRef}
               style={{
-                border: "3px solid #0B6B3A",
+                border: "5px solid #0B6B3A",
                 padding: "15px",
                 background: "#ffe58a",
                 boxSizing: "border-box",
@@ -593,7 +593,8 @@ You can go get one too 👾❤️ YOU BETTER GET ONE 👹 (I heard humans use th
               <div
                 style={{
                   background: "#f7c948",
-                  border: "3px solid black",
+                  border: "2px solid black",
+                  boxShadow: "4px 4px 0 #0B6B3A",
                   padding: "15px",
                   color: "#ff4f9a",
                   position: "relative",
@@ -661,7 +662,8 @@ You can go get one too 👾❤️ YOU BETTER GET ONE 👹 (I heard humans use th
                     style={{
                       width: "90px",
                       height: "110px",
-                      border: "3px solid black",
+                      border: "3px solid #0B6B3A",
+                      boxShadow: "3px 3px 0 #000",
                       background: "#128C52",
                       flexShrink: 0,
                       overflow: "hidden",
