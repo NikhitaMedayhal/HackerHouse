@@ -176,6 +176,30 @@ You can go get one too 👾❤️ YOU BETTER GET ONE 👹 (I heard humans use th
               lineHeight: 1.6,
             }}
           >
+            {/* CHARACTER REGISTRATION */}
+
+            <div
+              style={{
+                fontSize: "18px",
+                color: "#f7c948",
+                textAlign: "center",
+                marginBottom: "12px",
+                lineHeight: 1.4,
+                letterSpacing: "1px",
+              }}
+            >
+             CHARACTER REGISTRATION
+            </div>
+
+            <div
+              style={{
+                fontSize: "10px",
+                color: "#fff",
+                textAlign: "center",
+                lineHeight: 1.8,
+                marginBottom: "25px",
+              }}
+            ></div>
             Enter your information for your own character card, or what them humans call ID
           </h1>
 
@@ -192,7 +216,7 @@ You can go get one too 👾❤️ YOU BETTER GET ONE 👹 (I heard humans use th
           />
 
           <label style={{ fontSize: "11px", lineHeight: 1.8 }}>
-            Where are you from?
+            Where do you spawn?
           </label>
 
           <input
