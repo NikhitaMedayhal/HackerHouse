@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import type { Metadata } from "next";
 
 type Props = {
@@ -100,16 +101,21 @@ export default async function SharePage({ params }: Props) {
         >
           
           {/* TEMPORARY IMAGE */}
-          <img
+          <Image
             src={`/api/passport/${id}`}
             alt="Hacker House Goa Builder Passport"
+            width={800}
+            height={1000}
+            priority
             style={{
               width: "100%",
               maxWidth: "420px",
+              height: "auto",
               display: "block",
               margin: "0 auto",
               border: "3px solid black",
             }}
+            sizes="(max-width: 420px) 100vw, 420px"
           />
 
         </div>
@@ -139,6 +145,7 @@ export default async function SharePage({ params }: Props) {
           style={{
             display: "block",
             marginTop: "18px",
+            padding: "10px",
             color: "#ffe58a",
             textDecoration: "none",
             fontSize: "12px",

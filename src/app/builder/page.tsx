@@ -2,9 +2,14 @@
 
 import { useRef, useState } from "react";
 import html2canvas from "html2canvas";
+import PacmanCoconut from "@/components/PacmanCoconut";
 
 const PIXEL_FONT =
   "'Press Start 2P', 'Courier New', Courier, monospace";
+
+// Fields the passport can't really do without — all treated as required.
+const REQUIRED_FIELDS = ["name", "country", "role", "project", "github"] as const;
+type RequiredField = (typeof REQUIRED_FIELDS)[number];
 
 const inputStyle = {
   width: "100%",
@@ -16,6 +21,14 @@ const inputStyle = {
   boxSizing: "border-box" as const,
   fontFamily: PIXEL_FONT,
   fontSize: "10px",
+};
+
+// Same as inputStyle but flags the field red so it's obvious which one
+// still needs filling in.
+const inputErrorStyle = {
+  ...inputStyle,
+  border: "2px solid #ff3b3b",
+  boxShadow: "0 0 0 2px rgba(255, 59, 59, 0.35)",
 };
 
 export default function BuilderPage() {
@@ -34,6 +47,10 @@ export default function BuilderPage() {
     github: "",
     humour: false,
   });
+
+  // Tracks which required fields are currently empty, so we can highlight
+  // them and show a message instead of silently generating a blank card.
+  const [errors, setErrors] = useState<Partial<Record<RequiredField, boolean>>>({});
 
   const handlePhotoUpload = (
     e: React.ChangeEvent<HTMLInputElement>
@@ -56,10 +73,22 @@ export default function BuilderPage() {
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
-    setForm({
-      ...form,
-      [e.target.name]: e.target.value,
-    });
+    const { name, value } = e.target;
+
+    setForm((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+
+    // If this field was flagged as missing, clear that flag as soon as
+    // the user types/selects something — no need to wait for re-submit.
+    if (value.trim() && name in errors) {
+      setErrors((prev) => {
+        const next = { ...prev };
+        delete next[name as RequiredField];
+        return next;
+      });
+    }
   };
 
   const TWEET_MESSAGE = `I just got my character card uh no no sorry AHEM, my ID for Hacker House Goa 2026!
@@ -89,9 +118,25 @@ You can go get one too 👾❤️ YOU BETTER GET ONE 👹 (I heard humans use th
     const blob = await capturePassportBlob();
     if (!blob) return;
 
+    const filename = `${form.name || "builder"}-passport.png`;
+
+    // iOS Safari ignores the `download` attribute on <a> tags — it just
+    // opens the image instead of saving it. Web Share (when available)
+    // gives mobile users a real "Save Image" option instead.
+    const file = new File([blob], filename, { type: "image/png" });
+    if (navigator.canShare?.({ files: [file] })) {
+      try {
+        await navigator.share({ files: [file], title: "My Hacker House Passport" });
+        return;
+      } catch (err) {
+        if ((err as Error).name === "AbortError") return; // user cancelled
+        // otherwise fall through to the normal download below
+      }
+    }
+
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
-    link.download = `${form.name || "builder"}-passport.png`;
+    link.download = filename;
     link.href = url;
     link.click();
     URL.revokeObjectURL(url);
@@ -99,9 +144,17 @@ You can go get one too 👾❤️ YOU BETTER GET ONE 👹 (I heard humans use th
 
   const shareToX = async () => {
     setIsPosting(true);
+
+    // Mobile Safari blocks window.open() unless it happens synchronously
+    // inside the click handler. Opening a blank tab now — before any
+    // `await` — and redirecting it once the upload finishes keeps it
+    // inside that user-gesture window instead of getting silently blocked.
+    const popup = window.open("", "_blank");
+
     try {
       const blob = await capturePassportBlob();
       if (!blob) {
+        popup?.close();
         alert("Could not generate your passport image.");
         return;
       }
@@ -122,8 +175,15 @@ You can go get one too 👾❤️ YOU BETTER GET ONE 👹 (I heard humans use th
         `https://x.com/intent/post?text=` +
         encodeURIComponent(`${TWEET_MESSAGE}\n\n${shareUrl}`);
 
-      window.open(xUrl, "_blank", "noopener,noreferrer");
+      if (popup) {
+        popup.location.href = xUrl;
+      } else {
+        // Popup was blocked anyway (e.g. user has strict settings) — try a
+        // direct open as a last resort.
+        window.open(xUrl, "_blank", "noopener,noreferrer");
+      }
     } catch (error) {
+      popup?.close();
       console.error(error);
       const message = error instanceof Error ? error.message : "Unknown error";
       alert(`Something went wrong while preparing your passport:\n\n${message}`);
@@ -133,6 +193,21 @@ You can go get one too 👾❤️ YOU BETTER GET ONE 👹 (I heard humans use th
   };
 
   const handleSubmit = () => {
+    const newErrors: Partial<Record<RequiredField, boolean>> = {};
+
+    REQUIRED_FIELDS.forEach((field) => {
+      if (!form[field].trim()) {
+        newErrors[field] = true;
+      }
+    });
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      setShowPassport(false);
+      return;
+    }
+
+    setErrors({});
     setShowPassport(true);
   };
 
@@ -212,7 +287,7 @@ You can go get one too 👾❤️ YOU BETTER GET ONE 👹 (I heard humans use th
             name="name"
             value={form.name}
             onChange={handleChange}
-            style={inputStyle}
+            style={errors.name ? inputErrorStyle : inputStyle}
           />
 
           <label style={{ fontSize: "11px", lineHeight: 1.8 }}>
@@ -224,7 +299,7 @@ You can go get one too 👾❤️ YOU BETTER GET ONE 👹 (I heard humans use th
             name="city"
             value={form.city}
             onChange={handleChange}
-            style={inputStyle}
+            style={errors.country ? inputErrorStyle : inputStyle}
           />
 
           <label style={{ fontSize: "11px", lineHeight: 1.8 }}>
@@ -235,7 +310,7 @@ You can go get one too 👾❤️ YOU BETTER GET ONE 👹 (I heard humans use th
             name="role"
             value={form.role}
             onChange={handleChange}
-            style={inputStyle}
+            style={errors.role ? inputErrorStyle : inputStyle}
           >
             <option value="">Select</option>
             <option>Builder</option>
@@ -254,7 +329,7 @@ You can go get one too 👾❤️ YOU BETTER GET ONE 👹 (I heard humans use th
             name="project"
             value={form.project}
             onChange={handleChange}
-            style={inputStyle}
+            style={errors.project ? inputErrorStyle : inputStyle}
           />
 
           <label style={{ fontSize: "11px", lineHeight: 1.8 }}>
@@ -266,7 +341,7 @@ You can go get one too 👾❤️ YOU BETTER GET ONE 👹 (I heard humans use th
             name="github"
             value={form.github}
             onChange={handleChange}
-            style={inputStyle}
+            style={errors.github ? inputErrorStyle : inputStyle}
           />
 
           {/* ================= SENSE OF HUMOUR ================= */}
@@ -401,26 +476,55 @@ You can go get one too 👾❤️ YOU BETTER GET ONE 👹 (I heard humans use th
 
           {/* GENERATE BUTTON */}
 
+          {Object.keys(errors).length > 0 && (
+            <div
+              style={{
+                marginTop: "10px",
+                marginBottom: "-4px",
+                padding: "10px 12px",
+                background: "#3a0000",
+                border: "2px solid #ff3b3b",
+                color: "#ffb3b3",
+                fontSize: "9px",
+                lineHeight: 1.6,
+                textAlign: "center",
+              }}
+            >
+              Fill in the highlighted fields first, human.
+            </div>
+          )}
+
           <button
-            onClick={handleSubmit}
-            style={{
-              width: "100%",
-              marginTop: "10px",
-              padding: "12px",
-              background: "#f7c948",
-              border: "3px solid black",
-              cursor: "pointer",
-              fontWeight: "bold",
-              fontSize: "11px",
-              fontFamily: PIXEL_FONT,
-              boxShadow: "4px 4px 0 black",
-            }}
-          >
-            Generate ID (IN HUMAN LANGUAGE, 'CAUSE THEY'RE SUPRISINGLY INCOMPETENT FOR THEY HAVE VERY HIGH STANDARDS)
-          </button>
+  onClick={handleSubmit}
+  style={{
+    width: "100%",
+    marginTop: "10px",
+    padding: "12px",
+    background: "#f7c948",
+    border: "3px solid black",
+    cursor: "pointer",
+    fontWeight: "bold",
+    fontSize: "11px",
+    fontFamily: PIXEL_FONT,
+    boxShadow: "4px 4px 0 black",
+  }}
+>
+  Generate ID (IN HUMAN LANGUAGE, 'CAUSE THEY'RE SUPRISINGLY INCOMPETENT FOR THEY HAVE VERY HIGH STANDARDS)
+</button>
+
+<PacmanCoconut />
         </div>
 
         {/* ================= PASSPORT ================= */}
+
+        <style jsx>{`
+          @media (max-width: 480px) {
+            input,
+            select {
+              font-size: 16px !important;
+            }
+          }
+        `}</style>
 
         {showPassport && (
           <>
@@ -497,6 +601,7 @@ You can go get one too 👾❤️ YOU BETTER GET ONE 👹 (I heard humans use th
                     display: "flex",
                     gap: "15px",
                     alignItems: "flex-start",
+                    flexWrap: "wrap",
                   }}
                 >
                   {/* PHOTO */}

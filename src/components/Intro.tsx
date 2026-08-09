@@ -12,25 +12,44 @@ const frames = [
   "/sprites/sprite_3.png",
 ];
 
-const GROUND_HEIGHT = 80;
+const UFO_SRC = "/sprites/ufo.png";
+// Base sizes used for positioning math (fly-in target, beam alignment).
+// Actual rendered size uses clamp() so it scales down on narrow phones —
+// these numbers are the "desktop" reference point for that math.
+const UFO_WIDTH = 140;
+const UFO_HEIGHT = 70;
+const UFO_TOP = "16vh"; // where the UFO hovers while beaming down
 
+const GROUND_HEIGHT = 80;
 const STAR_COUNT = 80;
+const MOVE_SPEED = 8; // px per tick
+const MOVE_INTERVAL = 16; // ms, ~60fps — replaces relying on OS key-repeat
 
 const POPUP_MESSAGE =
   "WHA-, where am I? Why is it so dark here? What is this strange golden thing in front of me? Oh oh wait I see, it's a character card! But its empty....Maybe I'm supposed to fill it?";
+
+const HINT_MESSAGE =
+  "What do you think that golden card sticking out is? Walk towards it...";
 
 // how close (in px, sprite-center to passport-center) counts as "reached it"
 const PASSPORT_TRIGGER_DISTANCE = 50;
 
 type Star = { x: number; y: number; size: number; opacity: number };
 type Scene = "intro" | "popup" | "beach";
+type Direction = -1 | 0 | 1;
+// Entry cinematic: UFO flies in → hovers → beams the player down → flies off.
+// Movement/D-pad are locked out until this reaches "done".
+type EntryPhase = "flyIn" | "hover" | "beamDown" | "flyOut" | "done";
 
 export default function Intro() {
   const router = useRouter();
   // Start at 0 on both server and client so the first render always matches.
   const [x, setX] = useState<number>(0);
   const [frame, setFrame] = useState<number>(0);
-  const [moving, setMoving] = useState<boolean>(false);
+  // Single source of truth for movement — set by keyboard keydown/up OR by
+  // pressing/releasing the on-screen D-pad buttons. Whatever sets it, the
+  // same interval loop below moves the sprite.
+  const [direction, setDirection] = useState<Direction>(0);
   // Stars are generated client-side only, after mount — Math.random() at
   // module/render scope causes a server/client HTML mismatch (hydration error).
   const [stars, setStars] = useState<Star[]>([]);
@@ -40,8 +59,21 @@ export default function Intro() {
   // over the passport doesn't re-trigger it.
   const hasTriggeredRef = useRef(false);
 
+  // 🛸 UFO entry cinematic state
+  const [entryPhase, setEntryPhase] = useState<EntryPhase>("flyIn");
+  const [ufoX, setUfoX] = useState<number>(-UFO_WIDTH * 2); // starts off-screen left
+  const [beamOn, setBeamOn] = useState(false);
+  const [playerDropped, setPlayerDropped] = useState(false);
+  const [showHint, setShowHint] = useState(false);
+  const spawnXRef = useRef<number>(0);
+
+  const moving = direction !== 0;
+  const controlsEnabled = scene === "intro" && entryPhase === "done";
+
   useEffect(() => {
-    setX(window.innerWidth - 128);
+    const spawnX = window.innerWidth - 128;
+    spawnXRef.current = spawnX;
+    setX(spawnX);
     setStars(
       Array.from({ length: STAR_COUNT }, () => ({
         x: Math.random() * 100,
@@ -52,32 +84,106 @@ export default function Intro() {
     );
   }, []);
 
-  // Movement + popup input
+  // Keep the sprite in bounds if the viewport changes size (e.g. phone
+  // rotated from portrait to landscape).
+  useEffect(() => {
+    const handleResize = () => {
+      setX((prev) => Math.min(prev, window.innerWidth - 128));
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  // 🛸 Run the fly-in → hover → beam-down → fly-out sequence once on mount.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const timers: number[] = [];
+    const spawnX = spawnXRef.current || window.innerWidth - 128;
+    const ufoTargetX = spawnX + 64 - UFO_WIDTH / 2; // center UFO over spawn point
+
+    // Kick off the fly-in on the next tick so the initial off-screen
+    // position actually renders before the CSS transition animates.
+    timers.push(
+      window.setTimeout(() => {
+        setUfoX(ufoTargetX);
+      }, 50)
+    );
+
+    // Fly-in transition takes ~3.2s (see style below) — then hover briefly.
+    timers.push(
+      window.setTimeout(() => {
+        setEntryPhase("hover");
+      }, 3250)
+    );
+
+    // Start beaming down.
+    timers.push(
+      window.setTimeout(() => {
+        setEntryPhase("beamDown");
+        setBeamOn(true);
+      }, 3700)
+    );
+
+    // Drop the player in partway through the beam.
+    timers.push(
+      window.setTimeout(() => {
+        setPlayerDropped(true);
+      }, 4000)
+    );
+
+    // Retract the beam.
+    timers.push(
+      window.setTimeout(() => {
+        setBeamOn(false);
+      }, 4800)
+    );
+
+    // Fly the UFO off-screen to the right.
+    timers.push(
+      window.setTimeout(() => {
+        setEntryPhase("flyOut");
+        setUfoX(window.innerWidth + UFO_WIDTH * 2);
+      }, 5200)
+    );
+
+    // Hand control over to the player.
+    timers.push(
+      window.setTimeout(() => {
+        setEntryPhase("done");
+      }, 8200)
+    );
+
+    // Give the player a beat to look around, then nudge them toward the passport.
+    timers.push(
+      window.setTimeout(() => {
+        setShowHint(true);
+      }, 8800)
+    );
+
+    return () => timers.forEach((t) => window.clearTimeout(t));
+  }, []);
+
+  const goToBeach = () => router.push("/beach");
+
+  // Keyboard input (desktop)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (scene === "popup") {
-        if (e.key === "Enter") {
-          router.push("/beach");
-        }
+        if (e.key === "Enter") goToBeach();
         return;
       }
 
-      if (scene !== "intro") return;
+      if (!controlsEnabled) return;
 
-      if (e.key === "ArrowRight") {
-        setMoving(true);
-        setX((prev) => Math.min(prev + 8, window.innerWidth - 128));
-      }
-
-      if (e.key === "ArrowLeft") {
-        setMoving(true);
-        setX((prev) => Math.max(prev - 8, 0));
-      }
+      if (e.key === "ArrowRight") setDirection(1);
+      if (e.key === "ArrowLeft") setDirection(-1);
     };
 
-    const handleKeyUp = () => {
-      setMoving(false);
-      setFrame(0);
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
+        setDirection(0);
+      }
     };
 
     window.addEventListener("keydown", handleKeyDown);
@@ -87,21 +193,48 @@ export default function Intro() {
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
     };
-  }, [scene]);
+  }, [scene, controlsEnabled]);
 
+  // Continuous movement loop — driven purely by `direction`, so it works
+  // identically whether that direction came from the keyboard or a touch button.
   useEffect(() => {
-    if (!moving || scene !== "intro") return;
+    if (!controlsEnabled || direction === 0) return;
+
+    const interval = window.setInterval(() => {
+      setX((prev) => {
+        const next = prev + direction * MOVE_SPEED;
+        return Math.min(Math.max(next, 0), window.innerWidth - 128);
+      });
+    }, MOVE_INTERVAL);
+
+    return () => window.clearInterval(interval);
+  }, [direction, controlsEnabled]);
+
+  // Walk-cycle animation frame
+  useEffect(() => {
+    if (!moving || !controlsEnabled) {
+      setFrame(0);
+      return;
+    }
 
     const interval = window.setInterval(() => {
       setFrame((prev) => (prev + 1) % frames.length);
     }, 120);
 
     return () => window.clearInterval(interval);
-  }, [moving, scene]);
+  }, [moving, controlsEnabled]);
+
+  // Dismiss the hint as soon as the player starts walking — no need to
+  // keep nudging them once they've gotten the idea.
+  useEffect(() => {
+    if (direction !== 0 && showHint) {
+      setShowHint(false);
+    }
+  }, [direction, showHint]);
 
   // Collision check: has the sprite reached the buried passport?
   useEffect(() => {
-    if (scene !== "intro" || hasTriggeredRef.current) return;
+    if (scene !== "intro" || !controlsEnabled || hasTriggeredRef.current) return;
     if (typeof window === "undefined") return;
 
     const passportCenter = window.innerWidth / 2;
@@ -109,11 +242,11 @@ export default function Intro() {
 
     if (Math.abs(spriteCenter - passportCenter) <= PASSPORT_TRIGGER_DISTANCE) {
       hasTriggeredRef.current = true;
-      setMoving(false);
+      setDirection(0);
       setFrame(0);
       setScene("popup");
     }
-  }, [x, scene]);
+  }, [x, scene, controlsEnabled]);
 
   if (scene === "beach") {
     return (
@@ -124,7 +257,10 @@ export default function Intro() {
   }
 
   return (
-    <div className="relative h-screen overflow-hidden bg-gradient-to-b from-[#04030a] via-[#09101c] to-[#121212]">
+    <div
+      className="intro-root relative overflow-hidden bg-gradient-to-b from-[#04030a] via-[#09101c] to-[#121212]"
+      style={{ touchAction: "none" }}
+    >
       {/* ⭐ Stars */}
       <div className="absolute inset-0 overflow-hidden">
         {stars.map((star, i) => (
@@ -144,9 +280,9 @@ export default function Intro() {
 
       {/* ✨ Title */}
       <div
-        className="absolute left-1/2 top-24 -translate-x-1/2 text-center z-10"
+        className="absolute left-1/2 top-12 sm:top-24 -translate-x-1/2 text-center z-10 px-4"
         style={{
-          fontSize: "48px",
+          fontSize: "clamp(22px, 7vw, 48px)",
           fontWeight: "bold",
           color: "#ffd700",
           textShadow: `
@@ -157,6 +293,7 @@ export default function Intro() {
           `,
           fontFamily: "serif",
           letterSpacing: "2px",
+          whiteSpace: "nowrap",
         }}
       >
         Make Your Identity
@@ -164,11 +301,58 @@ export default function Intro() {
 
       {/* 🌕 Moon */}
       <div
-        className="absolute right-24 top-16 h-24 w-24 rounded-full bg-yellow-100 opacity-90"
+        className="absolute rounded-full bg-yellow-100 opacity-90"
         style={{
+          right: "clamp(16px, 6vw, 96px)",
+          top: "clamp(12px, 4vw, 64px)",
+          width: "clamp(48px, 14vw, 96px)",
+          height: "clamp(48px, 14vw, 96px)",
           boxShadow: "0 0 60px rgba(255,255,180,.6)",
         }}
       />
+
+      {/* 🛸 UFO — flies in, hovers, beams the player down, flies off */}
+      {entryPhase !== "done" && (
+        <Image
+          src={UFO_SRC}
+          alt="UFO"
+          width={UFO_WIDTH}
+          height={UFO_HEIGHT}
+          priority
+          className="absolute z-20"
+          style={{
+            left: `${ufoX}px`,
+            top: UFO_TOP,
+            width: "clamp(84px, 24vw, 140px)",
+            height: "clamp(42px, 12vw, 70px)",
+            imageRendering: "pixelated",
+            transition:
+              entryPhase === "flyOut"
+                ? "left 3s cubic-bezier(0.55,0,1,0.45)"
+                : "left 3.2s cubic-bezier(0.34,1.56,0.64,1)",
+            filter: "drop-shadow(0 8px 16px rgba(0,0,0,0.5))",
+          }}
+        />
+      )}
+
+      {/* 🔦 Beam-down light cone */}
+      {entryPhase !== "done" && (
+        <div
+          className="absolute z-10"
+          style={{
+            left: `${ufoX + UFO_WIDTH / 2 - 45}px`,
+            top: `calc(${UFO_TOP} + ${UFO_HEIGHT - 10}px)`,
+            width: "clamp(56px, 16vw, 90px)",
+            height: beamOn ? "clamp(160px, 34vh, 260px)" : "0px",
+            background:
+              "linear-gradient(180deg, rgba(255,241,168,0.65) 0%, rgba(255,241,168,0.25) 55%, rgba(255,241,168,0) 100%)",
+            clipPath: "polygon(38% 0%, 62% 0%, 100% 100%, 0% 100%)",
+            transition: "height 0.4s ease-out, left 3.2s cubic-bezier(0.34,1.56,0.64,1)",
+            pointerEvents: "none",
+            opacity: beamOn ? 1 : 0,
+          }}
+        />
+      )}
 
       {/* 👤 Player */}
       <Image
@@ -176,14 +360,44 @@ export default function Intro() {
         alt="Builder"
         width={128}
         height={128}
+        priority
         className="absolute"
         style={{
           left: `${x}px`,
           bottom: `${GROUND_HEIGHT}px`,
+          width: "clamp(80px, 22vw, 128px)",
+          height: "clamp(80px, 22vw, 128px)",
           imageRendering: "pixelated",
           zIndex: 5,
+          opacity: playerDropped ? 1 : 0,
+          transform: playerDropped
+            ? "translateY(0) scale(1)"
+            : "translateY(-50px) scale(0.6)",
+          transition:
+            "opacity 0.35s ease-out, transform 0.55s cubic-bezier(0.34,1.56,0.64,1)",
         }}
       />
+
+      {/* 💭 Hint text — nudges the player toward the passport, then fades away */}
+      <div
+        className="absolute left-1/2 -translate-x-1/2 text-center z-10 px-6"
+        style={{
+          bottom: "clamp(170px, 26vh, 210px)",
+          width: "min(80vw, 420px)",
+          color: "rgba(245, 213, 118, 0.75)",
+          fontFamily: "'Courier New', Courier, monospace",
+          fontWeight: 700,
+          fontSize: "clamp(10px, 3vw, 14px)",
+          lineHeight: 1.5,
+          letterSpacing: "0.5px",
+          textShadow: "1px 1px 0 rgba(0,0,0,0.6)",
+          opacity: showHint ? 1 : 0,
+          transition: "opacity 0.6s ease-in-out",
+          pointerEvents: "none",
+        }}
+      >
+        {HINT_MESSAGE}
+      </div>
 
       {/* 📔 Buried Passport */}
       <div
@@ -227,14 +441,68 @@ export default function Intro() {
         }}
       />
 
+      {/* 🎮 On-screen D-pad — touch controls, mirrors the arrow keys */}
+      {controlsEnabled && (
+        <div
+          className="absolute bottom-4 left-1/2 -translate-x-1/2 z-30 flex gap-4 sm:gap-5 select-none"
+          style={{ touchAction: "none" }}
+        >
+          <button
+            aria-label="Move left"
+            onPointerDown={(e) => {
+              e.preventDefault();
+              setDirection(-1);
+            }}
+            onPointerUp={() => setDirection(0)}
+            onPointerLeave={() => setDirection(0)}
+            onPointerCancel={() => setDirection(0)}
+            onContextMenu={(e) => e.preventDefault()}
+            className="flex items-center justify-center rounded-full text-2xl font-bold text-[#ffd700] active:scale-95"
+            style={{
+              width: "56px",
+              height: "56px",
+              background: "rgba(18,16,10,0.85)",
+              border: "2px solid #d4a72c",
+              boxShadow: "0 0 12px rgba(255,195,0,0.35)",
+              WebkitTouchCallout: "none",
+            }}
+          >
+            ◀
+          </button>
+          <button
+            aria-label="Move right"
+            onPointerDown={(e) => {
+              e.preventDefault();
+              setDirection(1);
+            }}
+            onPointerUp={() => setDirection(0)}
+            onPointerLeave={() => setDirection(0)}
+            onPointerCancel={() => setDirection(0)}
+            onContextMenu={(e) => e.preventDefault()}
+            className="flex items-center justify-center rounded-full text-2xl font-bold text-[#ffd700] active:scale-95"
+            style={{
+              width: "56px",
+              height: "56px",
+              background: "rgba(18,16,10,0.85)",
+              border: "2px solid #d4a72c",
+              boxShadow: "0 0 12px rgba(255,195,0,0.35)",
+              WebkitTouchCallout: "none",
+            }}
+          >
+            ▶
+          </button>
+        </div>
+      )}
+
       {/* 💬 Dialogue popup */}
       {scene === "popup" && (
         <div
-          className="absolute inset-0 z-20 flex justify-center"
+          className="absolute inset-0 z-20 flex justify-center px-4"
           style={{ background: "rgba(0,0,0,0.35)" }}
+          onClick={goToBeach}
         >
           <div
-            className="mt-32 w-[min(420px,85vw)] p-4"
+            className="mt-36 sm:mt-48 w-[min(420px,90vw)] p-4 h-fit"
             style={{
               background: "#12100a",
               border: "4px solid #100c05",
@@ -263,8 +531,14 @@ export default function Intro() {
             >
               {POPUP_MESSAGE}
             </p>
-            <p
-              className="mt-3 text-right"
+            {/* Real button (not just a key hint) so touch users have
+                something tappable — the whole popup is also clickable. */}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                goToBeach();
+              }}
+              className="mt-3 w-full text-right"
               style={{
                 color: "#ffd700",
                 fontFamily: "'Courier New', Courier, monospace",
@@ -272,18 +546,28 @@ export default function Intro() {
                 fontSize: "11px",
                 textTransform: "uppercase",
                 letterSpacing: "1px",
-                margin: 0,
                 textShadow: "1px 1px 0 #000",
                 animation: "pulse 1s steps(1) infinite",
+                background: "none",
+                border: "none",
+                cursor: "pointer",
               }}
             >
-              ▶ Press Enter to continue
-            </p>
+              ▶ Tap to continue
+            </button>
           </div>
         </div>
       )}
 
       <style jsx>{`
+        .intro-root {
+          /* iOS Safari < 15.4 doesn't understand 100dvh and ignores the
+             whole declaration, so it falls back to this 100vh first.
+             Browsers that DO understand dvh apply it and override the vh
+             line, avoiding the address-bar resize jump. */
+          height: 100vh;
+          height: 100dvh;
+        }
         @keyframes pulse {
           0%,
           49% {
