@@ -139,7 +139,7 @@ export default function BeachBackground({
           width: "min(88vw, 576px)",
           background: "#1B6B4A",
           boxShadow: "4px 4px 0 #071F17, 8px 8px 0 rgba(0,0,0,0.35)",
-          padding: "clamp(16px, 4vw, 28px) clamp(18px, 5vw, 32px)",
+          padding: "clamp(20px, 5vw, 36px) clamp(18px, 5vw, 32px) clamp(28px, 7vw, 44px)",
           imageRendering: "pixelated",
           boxSizing: "border-box",
         }}
@@ -220,14 +220,16 @@ export default function BeachBackground({
             className="press-enter"
             onClick={() => onEnter?.()}
             style={{
+              marginTop: "clamp(28px, 8vw, 44px)",
               minHeight: "44px",
               display: "inline-flex",
               alignItems: "center",
               cursor: "pointer",
               fontSize: "clamp(10px, 2.8vw, 13px)",
+              color: "#F4EFDD",
             }}
           >
-            ▶ PRESS ENTER
+               ▶ CLICK HERE
           </div>
       </div>
       <style jsx>{`
