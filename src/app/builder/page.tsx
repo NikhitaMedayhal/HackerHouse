@@ -11,6 +11,30 @@ const PIXEL_FONT =
 const REQUIRED_FIELDS = ["name", "city", "role", "project", "github"] as const;
 type RequiredField = (typeof REQUIRED_FIELDS)[number];
 
+/////
+const FRAME_WIDTH = 90;
+const FRAME_HEIGHT = 110;
+
+const clampPosition = (
+  pos: { x: number; y: number },
+  zoomLevel: number,
+  size: { width: number; height: number } | null
+) => {
+  if (!size) return pos;
+
+  const baseWidth = (size.width / size.height) * FRAME_HEIGHT;
+  const halfW = (baseWidth * zoomLevel) / 2;
+  const halfH = (FRAME_HEIGHT * zoomLevel) / 2;
+
+  const maxX = Math.max(0, halfW - FRAME_WIDTH / 2);
+  const maxY = Math.max(0, halfH - FRAME_HEIGHT / 2);
+
+  return {
+    x: Math.min(maxX, Math.max(-maxX, pos.x)),
+    y: Math.min(maxY, Math.max(-maxY, pos.y)),
+  };
+};
+/////
 const inputStyle = {
   width: "100%",
   padding: "10px",
@@ -43,6 +67,7 @@ export default function BuilderPage() {
   const [showPassport, setShowPassport] = useState(false);
   const [isPosting, setIsPosting] = useState(false);
   const [zoom, setZoom] = useState(1);
+  const [imgSize, setImgSize] = useState<{ width: number; height: number } | null>(null);
 
   const [form, setForm] = useState({
     name: "",
@@ -71,6 +96,7 @@ export default function BuilderPage() {
     reader.onloadend = () => {
       setPhoto(reader.result as string);
       setPhotoPosition({ x: 0, y: 0 });
+      setImgSize(null);
     };
 
     reader.readAsDataURL(file);
@@ -103,10 +129,12 @@ export default function BuilderPage() {
     const deltaX = e.clientX - photoDragStart.current.x;
     const deltaY = e.clientY - photoDragStart.current.y;
 
-    setPhotoPosition({
+    setPhotoPosition(
+      clampPosition({
       x: photoStartPosition.current.x + deltaX,
       y: photoStartPosition.current.y + deltaY,
-    });
+    },
+    zoom,imgSize));
   };
 
   const handlePhotoPointerUp = (
@@ -675,6 +703,8 @@ You can go get one too 👾❤️ YOU BETTER GET ONE 👹 (I heard humans use th
                       <img
                         src={photo}
                         alt="Builder"
+                        onLoad={(e) =>
+                          setImgSize({width: e.currentTarget.naturalWidth,height: e.currentTarget.naturalHeight, })}
                         onPointerDown={handlePhotoPointerDown}
                         onPointerMove={handlePhotoPointerMove}
                         onPointerUp={handlePhotoPointerUp}
@@ -815,7 +845,10 @@ You can go get one too 👾❤️ YOU BETTER GET ONE 👹 (I heard humans use th
                   max="3"
                   step="0.05"
                   value={zoom}
-                  onChange={(e) => setZoom(Number(e.target.value))}
+                  onChange={(e) => {const newZoom = Number(e.target.value);
+                                    setZoom(newZoom);
+                                    setPhotoPosition((prev) => clampPosition(prev, newZoom, imgSize));
+                                   }}
                   style={{
                     width: "160px",
                     accentColor: "#ff4f9a",
