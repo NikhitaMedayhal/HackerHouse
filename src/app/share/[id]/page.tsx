@@ -1,318 +1,42 @@
-"use client";
+import Link from "next/link";
+import Image from "next/image";
+import type { Metadata } from "next";
 
-import { useRef, useState } from "react";
-import html2canvas from "html2canvas";
-import PacmanCoconut from "@/components/PacmanCoconut";
+type Props = {
+  params: Promise<{
+    id: string;
+  }>;
+};
 
-const PIXEL_FONT =
-  "'Press Start 2P', 'Courier New', Courier, monospace";
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { id } = await params;
+  const appUrl = process.env.APP_URL || "http://localhost:3000";
+  const imageUrl = `${appUrl}/api/passport/${id}`;
+  const pageUrl = `${appUrl}/share/${id}`;
 
-const REQUIRED_FIELDS = ["name", "city", "role", "project", "github"] as const;
-type RequiredField = (typeof REQUIRED_FIELDS)[number];
-
-/////
-const FRAME_WIDTH = 90;
-const FRAME_HEIGHT = 110;
-
-const clampPosition = (
-  pos: { x: number; y: number },
-  zoomLevel: number,
-  size: { width: number; height: number } | null
-) => {
-  if (!size) return pos;
-
-  const baseWidth = (size.width / size.height) * FRAME_HEIGHT;
-  const halfW = (baseWidth * zoomLevel) / 2;
-  const halfH = (FRAME_HEIGHT * zoomLevel) / 2;
-
-  const maxX = Math.max(0, halfW - FRAME_WIDTH / 2);
-  const maxY = Math.max(0, halfH - FRAME_HEIGHT / 2);
+  const title = "Hacker House Goa 2026 — Builder Passport";
+  const description = "Check out this Builder Passport for Hacker House Goa 2026!";
 
   return {
-    x: Math.min(maxX, Math.max(-maxX, pos.x)),
-    y: Math.min(maxY, Math.max(-maxY, pos.y)),
-  };
-};
-/////
-const inputStyle = {
-  width: "100%",
-  padding: "10px",
-  marginTop: "6px",
-  marginBottom: "18px",
-  border: "2px solid black",
-  borderRadius: "4px",
-  boxSizing: "border-box" as const,
-  fontFamily: PIXEL_FONT,
-  fontSize: "10px",
-};
-
-const inputErrorStyle = {
-  ...inputStyle,
-  border: "2px solid #ff3b3b",
-  boxShadow: "0 0 0 2px rgba(255, 59, 59, 0.35)",
-};
-
-export default function BuilderPage() {
-  const [fileName, setFileName] = useState("");
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const passportRef = useRef<HTMLDivElement | null>(null);
-  const [photo, setPhoto] = useState<string | null>(null);
-  const [photoPosition, setPhotoPosition] = useState({ x: 0, y: 0 });
-  const [isDraggingPhoto, setIsDraggingPhoto] = useState(false);
-  const photoDragStart = useRef({ x: 0, y: 0 });
-  const photoStartPosition = useRef({ x: 0, y: 0 });
-  const [showPassport, setShowPassport] = useState(false);
-  const [isPosting, setIsPosting] = useState(false);
-  const [zoom, setZoom] = useState(1);
-  const [imgSize, setImgSize] = useState<{ width: number; height: number } | null>(null);
-
-  const [playerId, setPlayerId] = useState<string | null>(null);
-  const [isGeneratingId, setIsGeneratingId] = useState(false);
-  const [generateError, setGenerateError] = useState<string | null>(null);
-
-  const [form, setForm] = useState({
-    name: "",
-    city: "",
-    role: "",
-    project: "",
-    github: "",
-    humour: false,
-  });
-
-  const [errors, setErrors] = useState<Partial<Record<RequiredField, boolean>>>({});
-
-  const handlePhotoUpload = (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const file = e.target.files?.[0];
-
-    if (!file) return;
-
-    setFileName(file.name);
-
-    const reader = new FileReader();
-
-    reader.onloadend = () => {
-      setPhoto(reader.result as string);
-      setPhotoPosition({ x: 0, y: 0 });
-      setImgSize(null);
-    };
-
-    reader.readAsDataURL(file);
-  };
-  const handlePhotoPointerDown = (
-    e: React.PointerEvent<HTMLImageElement>
-  ) => {
-    e.preventDefault();
-
-    setIsDraggingPhoto(true);
-
-    photoDragStart.current = {
-      x: e.clientX,
-      y: e.clientY,
-    };
-
-    photoStartPosition.current = {
-      x: photoPosition.x,
-      y: photoPosition.y,
-    };
-
-    e.currentTarget.setPointerCapture(e.pointerId);
-  };
-
-  const handlePhotoPointerMove = (
-    e: React.PointerEvent<HTMLImageElement>
-  ) => {
-    if (!isDraggingPhoto) return;
-
-    const deltaX = e.clientX - photoDragStart.current.x;
-    const deltaY = e.clientY - photoDragStart.current.y;
-
-    setPhotoPosition(
-      clampPosition({
-      x: photoStartPosition.current.x + deltaX,
-      y: photoStartPosition.current.y + deltaY,
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      url: pageUrl,
+      images: [{ url: imageUrl, width: 1200, height: 630 }],
     },
-    zoom,imgSize));
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [imageUrl],
+    },
   };
+}
 
-  const handlePhotoPointerUp = (
-    e: React.PointerEvent<HTMLImageElement>
-  ) => {
-    setIsDraggingPhoto(false);
-
-    if (e.currentTarget.hasPointerCapture(e.pointerId)) {
-      e.currentTarget.releasePointerCapture(e.pointerId);
-    }
-  };
-
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
-    const { name, value } = e.target;
-
-    setForm((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-
-    if (value.trim() && name in errors) {
-      setErrors((prev) => {
-        const next = { ...prev };
-        delete next[name as RequiredField];
-        return next;
-      });
-    }
-  };
-
-  const TWEET_MESSAGE = `I just got my character card uh no no sorry AHEM, my ID for Hacker House Goa 2026!
-You can go get one too 👾❤️ YOU BETTER GET ONE 👹 (I heard humans use threatening so 💖 :0)
-#HackerHouseGoa #FrameInGoa #ILoveHumans
-~🧍🏽‍♀️(maybe)`
-    ;
-
-  const capturePassportBlob = async (): Promise<Blob | null> => {
-    if (!passportRef.current) return null;
-
-    // Make sure the pixel font is fully loaded before we snapshot —
-    // otherwise slower/different devices fall back to a system font
-    // with different character widths, which reflows text and causes
-    // it to overlap the absolutely-positioned images.
-    if (typeof document !== "undefined" && "fonts" in document) {
-      await document.fonts.ready;
-    }
-
-    const canvas = await html2canvas(passportRef.current, {
-      scale: 3,
-      backgroundColor: "#f7c948",
-      useCORS: true,
-    });
-
-    return new Promise<Blob | null>((resolve) =>
-      canvas.toBlob(resolve, "image/png")
-    );
-  };
-
-  const handleDownload = async () => {
-    let blob: Blob | null = null;
-    try {
-      blob = await capturePassportBlob();
-    } catch (err) {
-      console.error("capturePassportBlob failed", err);
-    }
-
-    if (!blob) {
-      alert("Couldn't generate your ID image. Please try again.");
-      return;
-    }
-
-    const filename = `${form.name || "builder"}-ID.png`;
-
-    // Always force a direct file download here (no Web Share API).
-    // Sharing opens a share sheet, and on some Android/Chrome builds
-    // people back out of it thinking nothing happened — "Download"
-    // should always mean "save straight to the device."
-    try {
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.download = filename;
-      link.href = url;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      // Give the browser a moment to start the download before revoking.
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
-    } catch (err) {
-      console.error("Direct download failed", err);
-      alert("Download didn't start. Try holding the button, or use 'Post on X' to share instead.");
-    }
-  };
-
-  const shareToX = async () => {
-    setIsPosting(true);
-
-    const popup = window.open("", "_blank");
-
-    try {
-      const blob = await capturePassportBlob();
-      if (!blob) {
-        popup?.close();
-        alert("Could not generate your passport image.");
-        return;
-      }
-
-      const body = new FormData();
-      body.append("image", blob, "builder-passport.png");
-
-      const res = await fetch("/api/passport", { method: "POST", body });
-      const resJson = await res.json();
-
-      if (!res.ok) {
-        throw new Error(resJson?.error || `Upload failed (${res.status})`);
-      }
-
-      const shareUrl = `${window.location.origin}/share/${resJson.id}`;
-
-      const xUrl =
-        `https://x.com/intent/post?text=` +
-        encodeURIComponent(`${TWEET_MESSAGE}\n\n${shareUrl}`);
-
-      if (popup) {
-        popup.location.href = xUrl;
-      } else {
-        window.open(xUrl, "_blank", "noopener,noreferrer");
-      }
-    } catch (error) {
-      popup?.close();
-      console.error(error);
-      const message = error instanceof Error ? error.message : "Unknown error";
-      alert(`Something went wrong while preparing your passport:\n\n${message}`);
-    } finally {
-      setIsPosting(false);
-    }
-  };
-
-  const handleSubmit = async () => {
-    const newErrors: Partial<Record<RequiredField, boolean>> = {};
-
-    REQUIRED_FIELDS.forEach((field) => {
-      if (!form[field].trim()) {
-        newErrors[field] = true;
-      }
-    });
-
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      setShowPassport(false);
-      return;
-    }
-
-    setErrors({});
-    setGenerateError(null);
-    setIsGeneratingId(true);
-
-    try {
-      const res = await fetch("/api/player-id", { method: "POST" });
-      const resJson = await res.json();
-
-      if (!res.ok) {
-        throw new Error(resJson?.error || `Request failed (${res.status})`);
-      }
-
-      setPlayerId(resJson.id);
-      setShowPassport(true);
-    } catch (error) {
-      console.error(error);
-      const message = error instanceof Error ? error.message : "Unknown error";
-      setGenerateError(
-        `Couldn't issue your player ID: ${message}. Try again in a moment.`
-      );
-      setShowPassport(false);
-    } finally {
-      setIsGeneratingId(false);
-    }
-  };
-
+export default async function SharePage({ params }: Props) {
+  const { id } = await params;
 
   return (
     <main
@@ -321,696 +45,121 @@ You can go get one too 👾❤️ YOU BETTER GET ONE 👹 (I heard humans use th
         background: "#0B6B3A",
         display: "flex",
         justifyContent: "center",
-        alignItems: "flex-start",
-        padding: "40px 20px",
-        fontFamily: PIXEL_FONT,
-        overflowX: "hidden",
+        alignItems: "center",
+        padding: "30px 20px",
+        fontFamily: "'Press Start 2P', 'Courier New', monospace",
       }}
     >
       <div
         style={{
           width: "100%",
-          maxWidth: "420px",
+          maxWidth: "500px",
+          textAlign: "center",
         }}
       >
+        {/* HEADER */}
 
         <div
           style={{
-            width: "100%",
-            background: "#128C52",
-            padding: "30px",
+            background: "#f7c948",
             border: "4px solid black",
-            borderRadius: "8px",
-            boxSizing: "border-box",
+            padding: "20px",
           }}
         >
           <h1
             style={{
-              textAlign: "center",
-              marginBottom: "25px",
-              fontFamily: PIXEL_FONT,
-              fontSize: "16px",
+              fontSize: "18px",
               lineHeight: 1.6,
+              margin: 0,
             }}
           >
-            <div
-              style={{
-                fontSize: "18px",
-                color: "#f7c948",
-                textAlign: "center",
-                marginBottom: "12px",
-                lineHeight: 1.4,
-                letterSpacing: "1px",
-              }}
-            >
-              CHARACTER REGISTRATION
-            </div>
-
-            <div
-              style={{
-                fontSize: "10px",
-                color: "#fff",
-                textAlign: "center",
-                lineHeight: 1.8,
-                marginBottom: "25px",
-              }}
-            ></div>
-            Enter your information for your own character card, or what them humans call ID
+            HACKER HOUSE
           </h1>
-
-          <label style={{ fontSize: "11px", lineHeight: 1.8 }}>
-            What do humans call you?
-          </label>
-
-          <input
-            type="text"
-            name="name"
-            value={form.name}
-            onChange={handleChange}
-            style={errors.name ? inputErrorStyle : inputStyle}
-          />
-
-          <label style={{ fontSize: "11px", lineHeight: 1.8 }}>
-            Where do you spawn? (Place 😭)
-          </label>
-
-          <input
-            type="text"
-            name="city"
-            value={form.city}
-            onChange={handleChange}
-            style={errors.city ? inputErrorStyle : inputStyle}
-          />
-
-          <label style={{ fontSize: "11px", lineHeight: 1.8 }}>
-            What are you suspiciously good at?
-          </label>
-
-          <select
-            name="role"
-            value={form.role}
-            onChange={handleChange}
-            style={errors.role ? inputErrorStyle : inputStyle}
-          >
-            <option value="">Select</option>
-            <option>Builder</option>
-            <option>Developer</option>
-            <option>Designer</option>
-            <option>Founder</option>
-            <option>Student</option>
-          </select>
-
-          <label style={{ fontSize: "11px", lineHeight: 1.8 }}>
-            Name of the crew you're bringing to Goa.
-          </label>
-
-          <input
-            type="text"
-            name="project"
-            value={form.project}
-            onChange={handleChange}
-            style={errors.project ? inputErrorStyle : inputStyle}
-          />
-
-          <label style={{ fontSize: "11px", lineHeight: 1.8 }}>
-            GitHub(Humans asking 🧍🏽‍♀️, I gotta give them something)
-          </label>
-
-          <input
-            type="text"
-            name="github"
-            value={form.github}
-            onChange={handleChange}
-            style={errors.github ? inputErrorStyle : inputStyle}
-          />
 
           <div
             style={{
-              marginTop: "5px",
-              marginBottom: "20px",
-              padding: "14px",
-              background: "#0B6B3A",
-              border: "3px solid black",
-              boxShadow: "4px 4px 0 black",
+              color: "#ff4f9a",
+              fontSize: "14px",
+              marginTop: "8px",
             }}
           >
-            <label
-              style={{
-                display: "block",
-                color: "#f7c948",
-                fontSize: "9px",
-                lineHeight: 1.8,
-                marginBottom: "8px",
-              }}
-            >
-              SENSE OF HUMOUR
-            </label>
-
-            <label
-              style={{
-                display: "flex",
-                alignItems: "flex-start",
-                gap: "8px",
-                cursor: "pointer",
-                color: "#ffe58a",
-                fontSize: "10px",
-                lineHeight: 1.8,
-              }}
-            >
-              <input
-                type="checkbox"
-                checked={form.humour}
-                onChange={(e) =>
-                  setForm({
-                    ...form,
-                    humour: e.target.checked,
-                  })
-                }
-                style={{
-                  width: "16px",
-                  height: "16px",
-                  accentColor: "#ff4f9a",
-                  flexShrink: 0,
-                }}
-              />
-
-              <span>
-                I LOVE HUMANS
-                <br />
-                <span
-                  style={{
-                    color: "#ff4f9a",
-                    fontSize: "10px",
-                  }}
-                >
-                  Select this if you read all the captions and showed your teeth 🦷.
-                </span>
-              </span>
-            </label>
+            GOA • 2026
           </div>
-
-          <div style={{ marginBottom: "20px" }}>
-            <label
-              style={{
-                display: "block",
-                color: "#ffd700",
-                marginBottom: "8px",
-                fontWeight: "bold",
-                fontSize: "11px",
-                lineHeight: 1.8,
-              }}
-            >
-              Submit visual evidence of your existence.
-            </label>
-
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handlePhotoUpload}
-              style={{ display: "none" }}
-            />
-
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "12px",
-              }}
-            >
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                style={{
-                  padding: "10px 16px",
-                  background: "#f7c948",
-                  border: "3px solid black",
-                  borderRadius: "4px",
-                  cursor: "pointer",
-                  fontWeight: "bold",
-                  fontSize: "10px",
-                  boxShadow: "3px 3px 0 black",
-                }}
-              >
-                Choose File
-              </button>
-
-              <span
-                style={{
-                  fontSize: "9px",
-                  color: "#ffd700",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
-                  maxWidth: "140px",
-                }}
-              >
-                {fileName || "No file chosen"}
-              </span>
-            </div>
-          </div>
-
-          {Object.keys(errors).length > 0 && (
-            <div
-              style={{
-                marginTop: "10px",
-                marginBottom: "-4px",
-                padding: "10px 12px",
-                background: "#3a0000",
-                border: "2px solid #ff3b3b",
-                color: "#ffb3b3",
-                fontSize: "9px",
-                lineHeight: 1.6,
-                textAlign: "center",
-              }}
-            >
-              Fill in the highlighted fields first, <del>not</del> human.
-            </div>
-          )}
-
-          {generateError && (
-            <div
-              style={{
-                marginTop: "10px",
-                marginBottom: "-4px",
-                padding: "10px 12px",
-                background: "#3a0000",
-                border: "2px solid #ff3b3b",
-                color: "#ffb3b3",
-                fontSize: "9px",
-                lineHeight: 1.6,
-                textAlign: "center",
-              }}
-            >
-              {generateError}
-            </div>
-          )}
-
-          <button
-            onClick={handleSubmit}
-            disabled={isGeneratingId}
-            style={{
-              width: "100%",
-              marginTop: "10px",
-              padding: "12px",
-              background: "#f7c948",
-              border: "3px solid black",
-              cursor: isGeneratingId ? "default" : "pointer",
-              opacity: isGeneratingId ? 0.7 : 1,
-              fontWeight: "bold",
-              fontSize: "11px",
-              fontFamily: PIXEL_FONT,
-              boxShadow: "4px 4px 0 black",
-            }}
-          >
-            {isGeneratingId
-              ? "ISSUING YOUR ID…"
-              : "Generate ID (IN HUMAN LANGUAGE, 'CAUSE THEY'RE SUPRISINGLY INCOMPETENT FOR THEY HAVE VERY HIGH STANDARDS)"}
-          </button>
-
-          <PacmanCoconut />
         </div>
 
-        <style jsx>{`
-          @media (max-width: 480px) {
-            input,
-            select {
-              font-size: 16px !important;
-            }
-          }
-        `}</style>
+        {/* PASSPORT */}
 
-        {showPassport && (
-          <>
-            <div
-              style={{
-                width: "100%",
-                overflowX: "auto",
-                marginTop: "20px",
-              }}
-            >
-            <div
-              ref={passportRef}
-              style={{
-                width: "390px",
-                maxWidth: "none",
-                border: "5px solid #0B6B3A",
-                padding: "15px",
-                background: "#ffe58a",
-                boxSizing: "border-box",
-                marginLeft: "auto",
-                marginRight: "auto",
-                color: "#ff4f9a"
-              }}
-            >
+        <div
+          style={{
+            marginTop: "30px",
+            background: "#0B6B3A",
+            border: "4px solid #0B6B3A",
+            padding: "15px",
+          }}
+        >
+          {/* TEMPORARY IMAGE */}
+          <Image
+            src={`/api/passport/${id}`}
+            alt="Hacker House Goa Builder Passport"
+            width={800}
+            height={1000}
+            priority
+            style={{
+              width: "100%",
+              maxWidth: "420px",
+              height: "auto",
+              display: "block",
+              margin: "0 auto",
+              border: "3px solid black",
+            }}
+            sizes="(max-width: 420px) 100vw, 420px"
+          />
+        </div>
 
-              <div
-                style={{
-                  background: "#f7c948",
-                  border: "2px solid black",
-                  boxShadow: "4px 4px 0 #0B6B3A",
-                  padding: "15px",
-                  color: "#ff4f9a",
-                  position: "relative",
-                }}
-              >
-                <img
-                  src="/goa.png"
-                  alt="Goa pixel art"
-                  style={{
-                    position: "absolute",
-                    right: "-40px",
-                    bottom: "-15px",
-                    width: "145%",
-                    height: "auto",
-                    imageRendering: "pixelated",
-                    pointerEvents: "none",
-                    zIndex: 0,
-                  }}
-                />
-                <img
-                  src="/stamp.png"
-                  alt=""
-                  style={{
-                    position: "absolute",
-                    right: "-10px",
-                    top: "95px",
-                    width: "45%",
-                    height: "auto",
-                    imageRendering: "pixelated",
-                    pointerEvents: "none",
-                    zIndex: 2,
-                  }}
-                />
+        {/* CTA */}
 
-                <div
-                  style={{
-                    textAlign: "center",
-                    fontSize: "13px",
-                    lineHeight: 1.7,
-                    marginBottom: "18px",
-                  }}
-                >
-                  HACKER HOUSE
-                  <br />
-                  GOA • 2026
-                </div>
+        <Link
+          href="/builder"
+          style={{
+            display: "block",
+            marginTop: "30px",
+            padding: "15px",
+            background: "#f7c948",
+            color: "black",
+            border: "4px solid black",
+            textDecoration: "none",
+            fontSize: "10px",
+            lineHeight: 1.6,
+          }}
+        >
+          🏝️ GET YOUR OWN BUILDER CARD, SHOW EVERYONE WHO YOU ARE
+        </Link>
 
-                <div
-                  style={{
-                    display: "flex",
-                    gap: "15px",
-                    alignItems: "flex-start",
-                    flexWrap: "wrap",
-                  }}
-                >
-                  <div
-                    style={{
-                      width: "90px",
-                      height: "110px",
-                      border: "3px solid #0B6B3A",
-                      boxShadow: "3px 3px 0 #000",
-                      background: "#128C52",
-                      flexShrink: 0,
-                      overflow: "hidden",
-                      position: "relative",
-                      touchAction: "none",
-                    }}
-                  >
-                    {photo ? (
-                      <img
-                        src={photo}
-                        alt="Builder"
-                        onLoad={(e) =>
-                          setImgSize({width: e.currentTarget.naturalWidth,height: e.currentTarget.naturalHeight, })}
-                        onPointerDown={handlePhotoPointerDown}
-                        onPointerMove={handlePhotoPointerMove}
-                        onPointerUp={handlePhotoPointerUp}
-                        onPointerCancel={handlePhotoPointerUp}
-                        style={{
-                          position: "absolute",
-                          left: "50%",
-                          top: "50%",
-                          width: "auto",
-                          height: "100%",
-                          maxWidth: "none",
-                          transform: `translate(-50%, -50%) translate(${photoPosition.x}px, ${photoPosition.y}px) scale(${zoom})`,
-                          cursor: isDraggingPhoto ? "grabbing" : "grab",
-                          userSelect: "none",
-                          touchAction: "none",
-                        }}
-                      />
-                    ) : (
-                      <div
-                        style={{
-                          width: "100%",
-                          height: "100%",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          fontSize: "8px",
-                          textAlign: "center",
-                        }}
-                      >
-                        PHOTO
-                      </div>
-                    )}
-                  </div>
+        <Link
+          href="/"
+          style={{
+            display: "block",
+            marginTop: "18px",
+            padding: "10px",
+            color: "#ffe58a",
+            textDecoration: "none",
+            fontSize: "12px",
+          }}
+        >
+          ← BACK TO HACKER HOUSE GOA
+        </Link>
 
-                  <div
-                    style={{
-                      fontSize: "9px",
-                      lineHeight: 2,
-                      wordBreak: "break-word",
-                    }}
-                  >
-                    <strong>NAME</strong>
-                    <br />
-                    {form.name || "—"}
-
-                    <br />
-
-                    <strong>CITY</strong>
-                    <br />
-                    {form.city || "—"}
-
-                    <br />
-
-                    <strong>ROLE</strong>
-                    <br />
-                    {form.role || "—"}
-                  </div>
-                </div>
-
-                <div
-                  style={{
-                    marginTop: "15px",
-                    paddingTop: "10px",
-                    borderTop: "2px dashed black",
-                    fontSize: "9px",
-                    lineHeight: 2,
-                    wordBreak: "break-word",
-                  }}
-                >
-                  <strong>TEAM NAME</strong>
-                  <br />
-                  {form.project || "—"}
-
-                  <br />
-                  <br />
-
-                  <strong>GITHUB</strong>
-                  <br />
-                  {form.github || "—"}
-                </div>
-              </div>
-
-              <div
-                style={{
-                  marginTop: "15px",
-                  textAlign: "center",
-                  fontSize: "8px",
-                  letterSpacing: "2px",
-                }}
-              >
-                BUILDER CARD • GOA 2026
-                {playerId && (
-                  <>
-                    <br />
-                    <span style={{ letterSpacing: "1px", opacity: 0.75 }}>
-                      ID: {playerId}
-                    </span>
-                  </>
-                )}
-              </div>
-            </div>
-            </div>
-
-            {photo && (
-              <div
-                style={{
-                  marginTop: "12px",
-                  textAlign: "center",
-                  width: "100%",
-                }}
-              >
-                <div
-                  style={{
-                    fontSize: "10px",
-                    fontFamily: PIXEL_FONT,
-                    color: "#ff4f9a",
-                    marginBottom: "4px",
-                    letterSpacing: "1px",
-                  }}
-                >
-                  POSITION YOUR HUMAN
-                </div>
-
-                <div
-                  style={{
-                    fontSize: "7px",
-                    fontFamily: PIXEL_FONT,
-                    color: "#fff",
-                    marginBottom: "6px",
-                    letterSpacing: "0.5px",
-                  }}
-                >
-                  DRAG TO FRAME • SLIDE TO ZOOM
-                </div>
-
-                <input
-                  type="range"
-                  min="1"
-                  max="3"
-                  step="0.05"
-                  value={zoom}
-                  onChange={(e) => {const newZoom = Number(e.target.value);
-                                    setZoom(newZoom);
-                                    setPhotoPosition((prev) => clampPosition(prev, newZoom, imgSize));
-                                   }}
-                  style={{
-                    width: "160px",
-                    accentColor: "#ff4f9a",
-                    cursor: "pointer",
-                  }}
-                />
-              </div>
-            )}
-
-            <div
-              style={{
-                marginTop: "25px",
-                marginBottom: "20px",
-                padding: "16px",
-                background: "#128C52",
-                border: "3px solid black",
-                boxShadow: "5px 5px 0 black",
-                textAlign: "center",
-                color: "#ffe58a",
-              }}
-            >
-              <div
-                style={{
-                  fontSize: "9px",
-                  lineHeight: 1.8,
-                  color: "#ff4f9a",
-                  marginBottom: "10px",
-                }}
-              >
-                PLAYER REGISTERED.
-              </div>
-
-              <div
-                style={{
-                  fontSize: "8px",
-                  lineHeight: 2,
-                  marginBottom: "12px",
-                }}
-              >
-                CONGRATS. YOU DID IT.
-                <br />
-                I SUPPOSE YOU'RE
-                <br />
-                OFFICIALLY A HUMAN NOW.
-              </div>
-
-              <div
-                style={{
-                  fontSize: "7px",
-                  lineHeight: 2,
-                  color: "#f7c948",
-                  marginBottom: "12px",
-                }}
-              >
-                MISSION: HACKER HOUSE
-                <br />
-                LOCATION: GOA
-                <br />
-                STATUS: UNLOCKED
-              </div>
-              <div
-                style={{
-                  fontSize: "9px",
-                  lineHeight: 1.8,
-                  color: "#f7c948",
-                }}
-              >
-                NOW GO SHOW 'EM
-                <br />
-                WHO OWNS THIS PLACE.
-              </div>
-            </div>
-
-            <div
-              style={{
-                display: "flex",
-                gap: "10px",
-                marginTop: "15px",
-                flexWrap: "wrap",
-              }}
-            >
-
-              <button
-                onClick={handleDownload}
-                style={{
-                  flex: 1,
-                  minWidth: "150px",
-                  padding: "12px",
-                  background: "#f7c948",
-                  color: "#000",
-                  border: "3px solid black",
-                  boxShadow: "4px 4px 0 black",
-                  fontFamily: PIXEL_FONT,
-                  fontSize: "9px",
-                  cursor: "pointer",
-                }}
-              >
-                ↓ DOWNLOAD ID
-              </button>
-
-              <button
-                onClick={shareToX}
-                disabled={isPosting}
-                style={{
-                  flex: 1,
-                  minWidth: "150px",
-                  padding: "12px",
-                  background: "#000",
-                  color: "#fff",
-                  border: "3px solid #0B6B3A",
-                  boxShadow: "4px 4px 0 #0B6B3A",
-                  fontFamily: PIXEL_FONT,
-                  fontSize: "9px",
-                  cursor: isPosting ? "default" : "pointer",
-                  opacity: isPosting ? 0.6 : 1,
-                }}
-              >
-                {isPosting ? "PREPARING…" : "𝕏 POST ON X"}
-              </button>
-            </div>
-          </>
-        )}
+        <p
+          style={{
+            marginTop: "30px",
+            color: "#ffe58a",
+            fontSize: "10px",
+            lineHeight: 1.8,
+          }}
+        >
+          HUMANS RULE. WE PLAY.
+        </p>
       </div>
-    </main >
+    </main>
   );
 }
