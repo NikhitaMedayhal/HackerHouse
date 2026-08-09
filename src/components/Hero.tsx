@@ -5,7 +5,6 @@ export default function Hero() {
   
       <BeachBackground />
       <div className="mx-auto flex min-h-screen max-w-7xl flex-col px-8 py-10">
-        {/* Navbar */}
         <nav className="flex items-center justify-between">
           <h2 className="font-black uppercase tracking-widest text-yellow-300">
             BUILDER PASS
@@ -16,11 +15,9 @@ export default function Hero() {
           </button>
         </nav>
 
-        {/* Hero */}
         <div className="flex flex-1 items-center">
           <div className="mt-24 flex w-full flex-col items-center gap-16 lg:flex-row lg:justify-between">
 
-            {/* LEFT */}
             <div className="max-w-3xl">
               <p className="mb-4 uppercase tracking-[0.4em] text-yellow-300">
                 Hacker House Goa 2026
@@ -41,14 +38,11 @@ export default function Hero() {
               </button>
             </div>
 
-            {/* RIGHT */}
             <div className="flex justify-center">
               <div className="relative">
 
-  {/* Sun */}
   <div className="absolute -right-8 -top-8 h-56 w-56 rounded-full bg-yellow-300 opacity-30 blur-3xl" />
 
-  {/* Passport */}
   <div className="relative w-[340px] min-h-[560px] rounded-[32px] bg-[#F7F2E8] p-8 shadow-2xl rotate-2">
 
   <p className="text-xs uppercase tracking-[0.4em] text-green-900">
@@ -58,8 +52,6 @@ export default function Hero() {
   <h2 className="mt-2 text-3xl font-black text-green-900">
     BUILDER PASS
   </h2>
-
-  {/* 👇 PASTE IT HERE */}
 
   <div className="mt-8 flex justify-center">
     <div className="relative rotate-[-4deg] rounded-md bg-white p-3 shadow-lg">

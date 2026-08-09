@@ -28,15 +28,12 @@ export async function POST(request: NextRequest) {
       try {
         detail = JSON.parse(uploadText)?.error?.message || uploadText;
       } catch {
-        // not JSON, use raw text
       }
       throw new Error(`Cloudinary upload failed (${uploadRes.status}): ${detail}`);
     }
 
     const uploadData = JSON.parse(uploadText) as { public_id: string };
 
-    // public_id doubles as the share id — /api/passport/[id] and
-    // /share/[id] both use it to find the image back on Cloudinary.
     return NextResponse.json({ id: uploadData.public_id });
   } catch (error) {
     console.error(error);

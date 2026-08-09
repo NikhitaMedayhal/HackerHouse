@@ -241,8 +241,6 @@ You can go get one too 👾❤️ YOU BETTER GET ONE 👹 (I heard humans use th
       if (popup) {
         popup.location.href = xUrl;
       } else {
-        // Popup was blocked anyway (e.g. user has strict settings) — try a
-        // direct open as a last resort.
         window.open(xUrl, "_blank", "noopener,noreferrer");
       }
     } catch (error) {
@@ -316,7 +314,6 @@ You can go get one too 👾❤️ YOU BETTER GET ONE 👹 (I heard humans use th
           maxWidth: "420px",
         }}
       >
-        {/* ================= FORM ================= */}
 
         <div
           style={{
@@ -337,8 +334,6 @@ You can go get one too 👾❤️ YOU BETTER GET ONE 👹 (I heard humans use th
               lineHeight: 1.6,
             }}
           >
-            {/* CHARACTER REGISTRATION */}
-
             <div
               style={{
                 fontSize: "18px",
@@ -430,8 +425,6 @@ You can go get one too 👾❤️ YOU BETTER GET ONE 👹 (I heard humans use th
             style={errors.github ? inputErrorStyle : inputStyle}
           />
 
-          {/* ================= SENSE OF HUMOUR ================= */}
-
           <div
             style={{
               marginTop: "5px",
@@ -497,8 +490,6 @@ You can go get one too 👾❤️ YOU BETTER GET ONE 👹 (I heard humans use th
             </label>
           </div>
 
-          {/* PHOTO UPLOAD */}
-
           <div style={{ marginBottom: "20px" }}>
             <label
               style={{
@@ -559,8 +550,6 @@ You can go get one too 👾❤️ YOU BETTER GET ONE 👹 (I heard humans use th
               </span>
             </div>
           </div>
-
-          {/* GENERATE BUTTON */}
 
           {Object.keys(errors).length > 0 && (
             <div
@@ -623,8 +612,6 @@ You can go get one too 👾❤️ YOU BETTER GET ONE 👹 (I heard humans use th
           <PacmanCoconut />
         </div>
 
-        {/* ================= PASSPORT ================= */}
-
         <style jsx>{`
           @media (max-width: 480px) {
             input,
@@ -636,7 +623,6 @@ You can go get one too 👾❤️ YOU BETTER GET ONE 👹 (I heard humans use th
 
         {showPassport && (
           <>
-            {/* ID CARD */}
             <div
               ref={passportRef}
               style={{
@@ -659,8 +645,6 @@ You can go get one too 👾❤️ YOU BETTER GET ONE 👹 (I heard humans use th
                   position: "relative",
                 }}
               >
-
-                {/* GOA PIXEL SCENE */}
                 <img
                   src="/goa.png"
                   alt="Goa pixel art"
@@ -675,7 +659,6 @@ You can go get one too 👾❤️ YOU BETTER GET ONE 👹 (I heard humans use th
                     zIndex: 0,
                   }}
                 />
-                {/* STAMP */}
                 <img
                   src="/stamp.png"
                   alt=""
@@ -690,7 +673,6 @@ You can go get one too 👾❤️ YOU BETTER GET ONE 👹 (I heard humans use th
                     zIndex: 2,
                   }}
                 />
-                {/* HEADER */}
 
                 <div
                   style={{
@@ -705,8 +687,6 @@ You can go get one too 👾❤️ YOU BETTER GET ONE 👹 (I heard humans use th
                   GOA • 2026
                 </div>
 
-                {/* PHOTO + DETAILS */}
-
                 <div
                   style={{
                     display: "flex",
@@ -715,8 +695,6 @@ You can go get one too 👾❤️ YOU BETTER GET ONE 👹 (I heard humans use th
                     flexWrap: "wrap",
                   }}
                 >
-                  {/* PHOTO */}
-
                   <div
                     style={{
                       width: "90px",
@@ -770,8 +748,6 @@ You can go get one too 👾❤️ YOU BETTER GET ONE 👹 (I heard humans use th
                     )}
                   </div>
 
-                  {/* DETAILS */}
-
                   <div
                     style={{
                       fontSize: "9px",
@@ -797,8 +773,6 @@ You can go get one too 👾❤️ YOU BETTER GET ONE 👹 (I heard humans use th
                   </div>
                 </div>
 
-                {/* TEAM NAME */}
-
                 <div
                   style={{
                     marginTop: "15px",
@@ -822,8 +796,6 @@ You can go get one too 👾❤️ YOU BETTER GET ONE 👹 (I heard humans use th
                 </div>
               </div>
 
-              {/* FOOTER */}
-
               <div
                 style={{
                   marginTop: "15px",
@@ -843,8 +815,6 @@ You can go get one too 👾❤️ YOU BETTER GET ONE 👹 (I heard humans use th
                 )}
               </div>
             </div>
-
-            {/* ZOOM CONTROL — OUTSIDE THE ID CARD */}
 
             {photo && (
               <div
@@ -896,8 +866,6 @@ You can go get one too 👾❤️ YOU BETTER GET ONE 👹 (I heard humans use th
                 />
               </div>
             )}
-
-            {/* ================= CONGRATULATIONS ================= */}
 
             <div
               style={{
@@ -962,7 +930,6 @@ You can go get one too 👾❤️ YOU BETTER GET ONE 👹 (I heard humans use th
                 WHO OWNS THIS PLACE.
               </div>
             </div>
-            {/* ================= BUTTONS ================= */}
 
             <div
               style={{
@@ -972,7 +939,6 @@ You can go get one too 👾❤️ YOU BETTER GET ONE 👹 (I heard humans use th
                 flexWrap: "wrap",
               }}
             >
-              {/* DOWNLOAD */}
 
               <button
                 onClick={handleDownload}
@@ -991,8 +957,6 @@ You can go get one too 👾❤️ YOU BETTER GET ONE 👹 (I heard humans use th
               >
                 ↓ DOWNLOAD ID
               </button>
-
-              {/* POST ON X */}
 
               <button
                 onClick={shareToX}

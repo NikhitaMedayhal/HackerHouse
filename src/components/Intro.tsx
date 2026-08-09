@@ -13,55 +13,40 @@ const frames = [
 ];
 
 const UFO_SRC = "/sprites/ufo.png";
-// Base sizes used for positioning math (fly-in target, beam alignment).
-// Actual rendered size uses clamp() so it scales down on narrow phones —
-// these numbers are the "desktop" reference point for that math.
 const UFO_WIDTH = 140;
 const UFO_HEIGHT = 70;
-const UFO_TOP = "16vh"; // where the UFO hovers while beaming down
+const UFO_TOP = "16vh"; 
 
 const GROUND_HEIGHT = 80;
 const STAR_COUNT = 80;
-const MOVE_SPEED = 8; // px per tick
-const MOVE_INTERVAL = 16; // ms, ~60fps — replaces relying on OS key-repeat
-
+const MOVE_SPEED = 8; 
+const MOVE_INTERVAL = 16; 
 const POPUP_MESSAGE =
   "WHA-, where am I? Why is it so dark here? What is this strange golden thing in front of me? Oh oh wait I see, it's a character card! But its empty....Maybe I'm supposed to fill it?";
 
 const HINT_MESSAGE =
   "What do you think that golden card sticking out is? Walk towards it...";
 
-// how close (in px, sprite-center to passport-center) counts as "reached it"
 const PASSPORT_TRIGGER_DISTANCE = 50;
 
 type Star = { x: number; y: number; size: number; opacity: number };
 type Scene = "intro" | "popup" | "beach";
 type Direction = -1 | 0 | 1;
-// Entry cinematic: UFO flies in → hovers → beams the player down → flies off.
-// Movement/D-pad are locked out until this reaches "done".
 type EntryPhase = "flyIn" | "hover" | "beamDown" | "flyOut" | "done";
 
 export default function Intro() {
   const router = useRouter();
-  // Start at 0 on both server and client so the first render always matches.
   const [x, setX] = useState<number>(0);
   const [frame, setFrame] = useState<number>(0);
-  // Single source of truth for movement — set by keyboard keydown/up OR by
-  // pressing/releasing the on-screen D-pad buttons. Whatever sets it, the
-  // same interval loop below moves the sprite.
   const [direction, setDirection] = useState<Direction>(0);
-  // Stars are generated client-side only, after mount — Math.random() at
-  // module/render scope causes a server/client HTML mismatch (hydration error).
   const [stars, setStars] = useState<Star[]>([]);
 
   const [scene, setScene] = useState<Scene>("intro");
-  // Track whether the popup has already fired so walking back and forth
-  // over the passport doesn't re-trigger it.
   const hasTriggeredRef = useRef(false);
 
   // 🛸 UFO entry cinematic state
   const [entryPhase, setEntryPhase] = useState<EntryPhase>("flyIn");
-  const [ufoX, setUfoX] = useState<number>(-UFO_WIDTH * 2); // starts off-screen left
+  const [ufoX, setUfoX] = useState<number>(-UFO_WIDTH * 2); 
   const [beamOn, setBeamOn] = useState(false);
   const [playerDropped, setPlayerDropped] = useState(false);
   const [showHint, setShowHint] = useState(false);
@@ -84,8 +69,6 @@ export default function Intro() {
     );
   }, []);
 
-  // Keep the sprite in bounds if the viewport changes size (e.g. phone
-  // rotated from portrait to landscape).
   useEffect(() => {
     const handleResize = () => {
       setX((prev) => Math.min(prev, window.innerWidth - 128));
@@ -94,30 +77,25 @@ export default function Intro() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // 🛸 Run the fly-in → hover → beam-down → fly-out sequence once on mount.
   useEffect(() => {
     if (typeof window === "undefined") return;
 
     const timers: number[] = [];
     const spawnX = spawnXRef.current || window.innerWidth - 128;
-    const ufoTargetX = spawnX + 64 - UFO_WIDTH / 2; // center UFO over spawn point
+    const ufoTargetX = spawnX + 64 - UFO_WIDTH / 2; 
 
-    // Kick off the fly-in on the next tick so the initial off-screen
-    // position actually renders before the CSS transition animates.
     timers.push(
       window.setTimeout(() => {
         setUfoX(ufoTargetX);
       }, 50)
     );
 
-    // Fly-in transition takes ~3.2s (see style below) — then hover briefly.
     timers.push(
       window.setTimeout(() => {
         setEntryPhase("hover");
       }, 3250)
     );
 
-    // Start beaming down.
     timers.push(
       window.setTimeout(() => {
         setEntryPhase("beamDown");
@@ -125,21 +103,18 @@ export default function Intro() {
       }, 3700)
     );
 
-    // Drop the player in partway through the beam.
     timers.push(
       window.setTimeout(() => {
         setPlayerDropped(true);
       }, 4000)
     );
 
-    // Retract the beam.
     timers.push(
       window.setTimeout(() => {
         setBeamOn(false);
       }, 4800)
     );
 
-    // Fly the UFO off-screen to the right.
     timers.push(
       window.setTimeout(() => {
         setEntryPhase("flyOut");
@@ -147,14 +122,12 @@ export default function Intro() {
       }, 5200)
     );
 
-    // Hand control over to the player.
     timers.push(
       window.setTimeout(() => {
         setEntryPhase("done");
       }, 8200)
     );
 
-    // Give the player a beat to look around, then nudge them toward the passport.
     timers.push(
       window.setTimeout(() => {
         setShowHint(true);
@@ -166,7 +139,6 @@ export default function Intro() {
 
   const goToBeach = () => router.push("/beach");
 
-  // Keyboard input (desktop)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (scene === "popup") {
@@ -195,8 +167,7 @@ export default function Intro() {
     };
   }, [scene, controlsEnabled]);
 
-  // Continuous movement loop — driven purely by `direction`, so it works
-  // identically whether that direction came from the keyboard or a touch button.
+  
   useEffect(() => {
     if (!controlsEnabled || direction === 0) return;
 
@@ -210,7 +181,6 @@ export default function Intro() {
     return () => window.clearInterval(interval);
   }, [direction, controlsEnabled]);
 
-  // Walk-cycle animation frame
   useEffect(() => {
     if (!moving || !controlsEnabled) {
       setFrame(0);
@@ -224,15 +194,12 @@ export default function Intro() {
     return () => window.clearInterval(interval);
   }, [moving, controlsEnabled]);
 
-  // Dismiss the hint as soon as the player starts walking — no need to
-  // keep nudging them once they've gotten the idea.
   useEffect(() => {
     if (direction !== 0 && showHint) {
       setShowHint(false);
     }
   }, [direction, showHint]);
 
-  // Collision check: has the sprite reached the buried passport?
   useEffect(() => {
     if (scene !== "intro" || !controlsEnabled || hasTriggeredRef.current) return;
     if (typeof window === "undefined") return;
@@ -261,7 +228,6 @@ export default function Intro() {
       className="intro-root relative overflow-hidden bg-gradient-to-b from-[#04030a] via-[#09101c] to-[#121212]"
       style={{ touchAction: "none" }}
     >
-      {/* ⭐ Stars */}
       <div className="absolute inset-0 overflow-hidden">
         {stars.map((star, i) => (
           <div
@@ -278,7 +244,6 @@ export default function Intro() {
         ))}
       </div>
 
-      {/* ✨ Title */}
       <div
         className="absolute left-1/2 top-12 sm:top-24 -translate-x-1/2 text-center z-10 px-4"
         style={{
@@ -299,7 +264,6 @@ export default function Intro() {
         Make Your Identity
       </div>
 
-      {/* 🌕 Moon */}
       <div
         className="absolute rounded-full bg-yellow-100 opacity-90"
         style={{
@@ -311,7 +275,6 @@ export default function Intro() {
         }}
       />
 
-      {/* 🛸 UFO — flies in, hovers, beams the player down, flies off */}
       {entryPhase !== "done" && (
         <Image
           src={UFO_SRC}
@@ -335,7 +298,6 @@ export default function Intro() {
         />
       )}
 
-      {/* 🔦 Beam-down light cone */}
       {entryPhase !== "done" && (
         <div
           className="absolute z-10"
@@ -354,7 +316,6 @@ export default function Intro() {
         />
       )}
 
-      {/* 👤 Player */}
       <Image
         src={frames[frame]}
         alt="Builder"
@@ -378,7 +339,6 @@ export default function Intro() {
         }}
       />
 
-      {/* 💭 Hint text — nudges the player toward the passport, then fades away */}
       <div
         className="absolute left-1/2 -translate-x-1/2 text-center z-10 px-6"
         style={{
@@ -399,12 +359,11 @@ export default function Intro() {
         {HINT_MESSAGE}
       </div>
 
-      {/* 📔 Buried Passport */}
       <div
         className="absolute rounded-[3px]"
         style={{
           left: "50%",
-          bottom: "65px", // partially overlaps the ground strip (0–80px) so it reads as half-buried
+          bottom: "65px", 
           width: "44px",
           height: "30px",
           transform: "translateX(-50%) rotate(-9deg)",
@@ -417,7 +376,6 @@ export default function Intro() {
           `,
         }}
       >
-        {/* simple emblem to read as a passport crest */}
         <div
           className="absolute rounded-full"
           style={{
@@ -432,7 +390,6 @@ export default function Intro() {
         />
       </div>
 
-      {/* 🌍 Ground */}
       <div
         className="absolute bottom-0 h-20 w-full"
         style={{
@@ -441,7 +398,6 @@ export default function Intro() {
         }}
       />
 
-      {/* 🎮 On-screen D-pad — touch controls, mirrors the arrow keys */}
       {controlsEnabled && (
         <div
           className="absolute bottom-4 left-1/2 -translate-x-1/2 z-30 flex gap-4 sm:gap-5 select-none"
@@ -494,7 +450,6 @@ export default function Intro() {
         </div>
       )}
 
-      {/* 💬 Dialogue popup */}
       {scene === "popup" && (
         <div
           className="absolute inset-0 z-20 flex justify-center px-4"
@@ -531,8 +486,6 @@ export default function Intro() {
             >
               {POPUP_MESSAGE}
             </p>
-            {/* Real button (not just a key hint) so touch users have
-                something tappable — the whole popup is also clickable. */}
             <button
               onClick={(e) => {
                 e.stopPropagation();

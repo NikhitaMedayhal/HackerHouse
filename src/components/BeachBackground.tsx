@@ -1,12 +1,3 @@
-// Pixel-art helpers ---------------------------------------------------------
-// Small utilities that build crisp, right-angle geometry (circles as pixel
-// grids, waves as square "staircase" waveforms) instead of smooth curves —
-// combined with shape-rendering="crispEdges" this reads as genuine 8-bit art
-// instead of a blurry/anti-aliased approximation of one.
-
-// (sun cell size now lives in the --sun-px CSS variable, set inline where
-// the sun is rendered, so it can scale with viewport width)
-
 function buildCircleCells(radius: number) {
   const cells: { x: number; y: number }[] = [];
   for (let y = -radius; y <= radius; y++) {
@@ -26,8 +17,6 @@ const haloCells = buildCircleCells(HALO_RADIUS).filter(
   (c) => !sunCells.some((s) => s.x === c.x && s.y === c.y)
 );
 
-// Builds a flat "SQUARE WAVE" path (horizontal + vertical segments only —
-// no curves) so the ocean reads as pixel-water instead of a smooth sea.
 function buildSquareWavePath(
   width: number,
   bottom: number,
@@ -50,10 +39,6 @@ const WAVE_WIDTH = 1440;
 
 const PIXEL_FONT = "'Press Start 2P', 'Courier New', Courier, monospace";
 
-// Stepped, hard-edged "pixel" drop shadow — several 1px-multiple offsets
-// instead of a blurred box-shadow, so the letters look stamped rather than
-// lit. Two tones: a near navy for the body of the shadow, a soft black for
-// the trailing pixel underneath it.
 const PIXEL_TEXT_SHADOW = [
   "2px 0 0 #133A5C",
   "0 2px 0 #133A5C",
@@ -71,10 +56,8 @@ export default function BeachBackground({
 }) {
   return (
     <div className="absolute inset-0 overflow-hidden bg-[#0F3D2E]">
-      {/* Pull in a genuine bitmap face for the headline treatment */}
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');`}</style>
 
-      {/* Sky — flat single-tone light blue */}
 <div
   className="absolute inset-0"
   style={{
@@ -82,10 +65,6 @@ export default function BeachBackground({
   }}
 />
 
-      {/* Sun — built from a bitmap of square cells, no border-radius/blur.
-          Cell size comes from a CSS var (--sun-px) that scales with the
-          viewport, so the whole grid shrinks proportionally on phones
-          instead of staying a fixed 168px and crowding the welcome card. */}
       <div
         className="absolute"
         style={{
@@ -127,18 +106,6 @@ export default function BeachBackground({
         ))}
       </div>
 
-{/* Ocean — square-wave layers instead of curved swells */}      
-      {/* <div  style={{   
-        position: "absolute",    
-        bottom: "128px",    
-        width: "100%",    
-        height: "140px",    
-        backgroundImage: "url('/tiles/water.png')",    
-        backgroundRepeat: "repeat",    
-        imageRendering: "pixelated",  }}
-        />
-   */}
-      {/* Ocean — animated wave tile */}
   <div
     className="wave-layer"
     style={{
@@ -153,7 +120,6 @@ export default function BeachBackground({
     }}
   />
       
-      {/* Sand — crisp dither pattern instead of soft radial dots */}
       <div
   style={{
     position: "absolute",
@@ -165,7 +131,6 @@ export default function BeachBackground({
     imageRendering: "pixelated",
   }}
 />
-      {/* Welcome copy — sits on its own dark-green pixel card, not the sky */}
       <div
         className="absolute z-10"
         style={{
@@ -193,8 +158,6 @@ export default function BeachBackground({
           HACKER HOUSE GOA · 2026
         </div>
 
-        {/* Headline + badge live in one relative wrapper so the badge can
-            sit tucked into the letterforms, echoing the reference layout */}
         <div style={{ position: "relative", display: "inline-block" }}>
           <div
             style={{
@@ -212,9 +175,6 @@ export default function BeachBackground({
             TO GOA
           </div>
 
-          {/* Pixel badge accent — jagged stepped border instead of a
-              rounded pill, filled square corners instead of anti-aliased
-              curves, tucked over the headline like a stamped sticker */}
           <div
             style={{
               position: "absolute",
@@ -260,9 +220,6 @@ export default function BeachBackground({
             className="press-enter"
             onClick={() => onEnter?.()}
             style={{
-              // Fallback sizing in case the external .press-enter class
-              // doesn't already guarantee a comfortable tap target —
-              // ~44px is the usual minimum for touch.
               minHeight: "44px",
               display: "inline-flex",
               alignItems: "center",

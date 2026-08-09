@@ -13,11 +13,8 @@ export async function GET(request: NextRequest, { params }: Props) {
     return NextResponse.json({ error: "missing_id" }, { status: 400 });
   }
 
-  // public_id from Cloudinary can contain folder slashes (e.g. "hh_goa_passport/abc123"),
-  // which arrive here URL-encoded as %2F in a single [id] segment — decode before use.
   const publicId = decodeURIComponent(id);
 
-  // f_auto lets Cloudinary pick the best/actual format instead of us guessing an extension.
   const imageUrl = `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/image/upload/f_auto/${publicId}`;
 
   const upstream = await fetch(imageUrl, { cache: "no-store" });
